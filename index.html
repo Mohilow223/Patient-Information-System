@@ -46,7 +46,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       position: relative;
     }
-    /* Header */
+    /* Header styling */
     .header {
       display: flex;
       justify-content: flex-end;
@@ -71,6 +71,7 @@
     .header button:hover {
       background: #006ae0;
     }
+    /* Main Heading */
     h1 {
       font-size: var(--heading-font-size);
       text-align: center;
@@ -149,6 +150,7 @@
     button:hover {
       background: var(--primary-dark);
     }
+    /* Navigation buttons styling */
     .button-container button {
       background: var(--accent-color);
       font-size: 1.2rem;
@@ -252,7 +254,8 @@
       </div>
     </form>
     <div class="button-container">
-      <button type="button" onclick="window.open('patientTable.html', '_blank')">Show patients list</button>
+      <button type="button" onclick="window.open('patientTable.html', '_blank')">Show Patients List</button>
+      <button type="button" onclick="window.open('dashboard.html', '_blank')">Go to Dashboard</button>
     </div>
   </div>
   
@@ -270,7 +273,7 @@
     
     document.addEventListener('DOMContentLoaded', setupHeader);
     
-    // Helper: Read multiple files as Data URLs (for investigations)
+    // Read multiple files as Data URLs for investigations
     function readFilesAsDataURL(files) {
       const promises = [];
       for (let i = 0; i < files.length; i++) {
@@ -460,15 +463,13 @@
     }
     document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
     
-    // Handle form submission: check for duplicate patient by name (case-insensitive)
-    // within the current user's records before saving online using Parse.
+    // Handle form submission: check for duplicate patient by name (case-insensitive) within current user's records before saving online using Parse.
     document.getElementById('patientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       
       const patientName = document.getElementById('patientName').value.trim();
       
-      // Query for an existing patient with the same name (case-insensitive)
-      // AND created by the current user.
+      // Query for an existing patient with the same name (case-insensitive) AND created by the current user
       const Patient = Parse.Object.extend("Patient");
       const query = new Parse.Query(Patient);
       query.matches("patientName", "^" + patientName + "$", "i");
@@ -481,6 +482,7 @@
             window.location.href = "editPatient.html?patientId=" + duplicate.id;
             return;
           } else {
+            // If user cancels, do not proceed with saving.
             return;
           }
         }
@@ -554,7 +556,7 @@
           investigationsArray = await readFilesAsDataURL(files);
         }
         
-        // Create a new Parse Patient object and set fields
+        // Create a new Parse object for the "Patient" class and set fields
         const newPatient = new Patient();
         newPatient.set("patientName", patientName);
         newPatient.set("dob", dob);
@@ -566,7 +568,7 @@
         newPatient.set("visits", visitsArray);
         newPatient.set("investigations", investigationsArray);
         newPatient.set("registrationDate", new Date().toISOString());
-        // Associate this patient with the current user
+        // Associate patient with the current user
         newPatient.set("createdBy", Parse.User.current());
         
         const savedPatient = await newPatient.save();
