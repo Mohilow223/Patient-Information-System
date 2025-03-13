@@ -5,12 +5,19 @@
   <title>Patient Data Table</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Include Parse SDK -->
+  <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script>
+    // Initialize Parse with your Back4App credentials
+    Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
+    Parse.serverURL = 'https://parseapi.back4app.com/';
+  </script>
   <style>
     :root {
       --primary-color: #4CAF50;
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
-      --dataEntry-btn-bg: #FF5722; /* Orange for Data Entry button */
+      --dataEntry-btn-bg: #FF5722;
       --dataEntry-btn-hover: #E64A19;
       --bg-color: #f9f9f9;
       --card-bg: #ffffff;
@@ -55,7 +62,6 @@
       border-radius: var(--border-radius);
       color: #fff;
       cursor: pointer;
-      transition: background 0.3s;
     }
     .header button:hover {
       background: #006ae0;
@@ -91,38 +97,6 @@
     tr:hover {
       background: #f1f1f1;
     }
-    /* Action buttons styling */
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-    }
-    .action-buttons button {
-      padding: 8px 12px;
-      font-size: 1rem;
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      transition: background 0.3s;
-      min-width: 70px;
-    }
-    .show-btn {
-      background-color: #2196F3;
-      color: #fff;
-    }
-    .show-btn:hover {
-      background-color: #1976D2;
-    }
-    .delete-btn {
-      background-color: #F44336;
-      color: #fff;
-    }
-    .delete-btn:hover {
-      background-color: #D32F2F;
-    }
-    /* Navigation button at the bottom */
     .button-container {
       text-align: center;
       margin-top: var(--spacing);
@@ -144,7 +118,7 @@
 </head>
 <body>
   <script>
-    // Check if user is logged in; if not, redirect to login page.
+    // Redirect to login if not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -168,11 +142,11 @@
         </tr>
       </thead>
       <tbody id="patientTableBody">
-        <!-- Patient rows will be inserted here -->
+        <!-- Data will be populated here -->
       </tbody>
     </table>
     <div class="button-container">
-      <button onclick="window.open('index.html', '_blank')">Go to Data Entry</button>
+      <button type="button" onclick="window.open('index.html', '_blank')">Go to Data Entry</button>
     </div>
   </div>
   
@@ -188,42 +162,56 @@
       });
     }
     
-    // Load patients from localStorage and render table rows
-    function loadPatients() {
-      let patients = localStorage.getItem('patients');
-      patients = patients ? JSON.parse(patients) : [];
-      const tbody = document.getElementById('patientTableBody');
-      tbody.innerHTML = '';
-      patients.forEach((patient, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${patient.patientID}</td>
-          <td>${patient.patientName}</td>
-          <td>${patient.dob}</td>
-          <td>${patient.location}</td>
-          <td>${patient.phone}</td>
-          <td>
-            <div class="action-buttons">
-              <button class="show-btn" onclick="editPatient(${index})">Show</button>
-              <button class="delete-btn" onclick="deletePatient(${index})">Delete</button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
+    // Load patients from Parse and populate table
+    async function loadPatients() {
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        const results = await query.find();
+        const tbody = document.getElementById('patientTableBody');
+        tbody.innerHTML = '';
+        results.forEach((patient) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${patient.get("patientID") || patient.id}</td>
+            <td>${patient.get("patientName") || ""}</td>
+            <td>${patient.get("dob") || ""}</td>
+            <td>${patient.get("location") || ""}</td>
+            <td>${patient.get("phone") || ""}</td>
+            <td>
+              <button onclick="showPatient('${patient.id}')">Show</button>
+              <button onclick="deletePatient('${patient.id}')">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("Error fetching patients: ", error);
+      }
     }
     
-    // Functions for Show (edit) and Delete actions
-    function editPatient(index) {
-      window.location.href = 'editPatient.html?index=' + index;
+    // Function to navigate to the edit page
+    function showPatient(patientId) {
+      window.location.href = `editPatient.html?patientId=${patientId}`;
     }
-    function deletePatient(index) {
+    
+    // Function to delete a patient from Parse
+    async function deletePatient(patientId) {
       if (confirm("Are you sure you want to delete this patient?")) {
-        let patients = localStorage.getItem('patients');
-        patients = patients ? JSON.parse(patients) : [];
-        patients.splice(index, 1);
-        localStorage.setItem('patients', JSON.stringify(patients));
-        loadPatients();
+        try {
+          const Patient = Parse.Object.extend("Patient");
+          const query = new Parse.Query(Patient);
+          query.equalTo("objectId", patientId);
+          const patient = await query.first();
+          if (patient) {
+            await patient.destroy();
+            alert("Patient deleted successfully.");
+            loadPatients();
+          }
+        } catch (error) {
+          console.error("Error deleting patient: ", error);
+          alert("Error deleting patient: " + error.message);
+        }
       }
     }
     
