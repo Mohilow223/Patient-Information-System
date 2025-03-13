@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard - User Management</title>
+  <title>Dashboard - Patient Trends</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <!-- Include Parse SDK -->
+  <!-- Include Parse SDK and Chart.js -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     // Initialize Parse with your Back4App credentials
     Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
@@ -23,6 +24,7 @@
       --border-radius: 8px;
       --font-size: 1.1rem;
       --heading-font-size: 2rem;
+      --chart-heading-size: 1.3rem;
       --spacing: 20px;
     }
     body {
@@ -39,7 +41,6 @@
       padding: var(--spacing);
       border-radius: var(--border-radius);
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      position: relative;
     }
     /* Header */
     .header {
@@ -75,58 +76,36 @@
       padding: 10px;
       border-radius: var(--border-radius);
     }
-    /* Users Section */
-    .user-section {
-      margin-bottom: var(--spacing);
-      padding: var(--spacing);
-      border: 1px solid #ddd;
-      border-radius: var(--border-radius);
-      background: #fff;
-    }
-    .user-section h2 {
-      margin-top: 0;
-      font-size: 1.5rem;
-      margin-bottom: var(--spacing);
-      text-align: center;
-    }
-    .user-section table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: var(--spacing);
-    }
-    .user-section th, .user-section td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      font-size: var(--font-size);
-      text-align: left;
-    }
-    .user-section th {
-      background: var(--primary-color);
-      color: #fff;
-    }
-    .user-section button {
-      background: var(--primary-color);
-      padding: 8px 12px;
-      font-size: 1rem;
-      border: none;
-      border-radius: var(--border-radius);
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .user-section button:hover {
-      background: var(--primary-dark);
-    }
-    /* Navigation Buttons */
-    .button-container {
-      text-align: center;
-      margin-top: var(--spacing);
+    /* Charts Container */
+    .charts-container {
       display: flex;
       flex-wrap: wrap;
+      gap: var(--spacing);
+      justify-content: center;
+    }
+    .chart-box {
+      flex: 1 1 300px;
+      max-width: 400px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: var(--spacing);
+      box-sizing: border-box;
+    }
+    .chart-box h2 {
+      text-align: center;
+      margin-bottom: var(--spacing);
+      font-size: var(--chart-heading-size);
+    }
+    /* Navigation Buttons */
+    .nav-buttons {
+      display: flex;
       justify-content: center;
       gap: var(--spacing);
+      margin-top: var(--spacing);
+      flex-wrap: wrap;
     }
-    .button-container button {
+    .nav-buttons button {
       background: var(--accent-color);
       color: #fff;
       padding: 14px 28px;
@@ -136,14 +115,14 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    .button-container button:hover {
+    .nav-buttons button:hover {
       background: #e64a19;
     }
   </style>
 </head>
 <body>
   <script>
-    // If not logged in, redirect to login page
+    // Redirect to login if not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -154,35 +133,33 @@
       <span id="welcomeUser">Welcome, Unknown</span>
       <button id="logoutBtn">Logout</button>
     </div>
-    <h1>Admin Dashboard</h1>
+    <h1>Dashboard</h1>
     
-    <!-- Users Section (visible only for admin) -->
-    <div id="usersSection">
-      <h2>Registered Users</h2>
-      <table id="usersTable">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Password</th>
-          </tr>
-        </thead>
-        <tbody id="usersTableBody">
-          <!-- User rows will be loaded here -->
-        </tbody>
-      </table>
-      <button id="addUserBtn">Add User</button>
+    <!-- Charts Container -->
+    <div class="charts-container">
+      <div class="chart-box">
+        <h2>Age Distribution</h2>
+        <canvas id="ageChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h2>Location Distribution</h2>
+        <canvas id="locationChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h2>Chief Complaint Distribution</h2>
+        <canvas id="complaintChart"></canvas>
+      </div>
     </div>
     
-    <!-- Navigation Buttons -->
-    <div class="button-container">
+    <!-- Navigation Buttons (only two) -->
+    <div class="nav-buttons">
       <button onclick="window.open('patientTable.html', '_blank')">Patients Table</button>
       <button onclick="window.open('index.html', '_blank')">Data Entry Page</button>
-      <button onclick="window.open('dashboard.html', '_blank')">Dashboard</button>
     </div>
   </div>
   
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -193,63 +170,120 @@
       });
     }
     
-    // Only show the users section if the logged-in user is admin ("mhh")
-    function checkAdmin() {
-      const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
-      if (loggedUser !== "mhh") {
-        document.getElementById('usersSection').style.display = "none";
-      } else {
-        loadUsers();
-      }
+    // Helper: Calculate age from a dob string ("YYYY-MM-DD")
+    function calculateAge(dobString) {
+      const dob = new Date(dobString);
+      const diffMs = Date.now() - dob.getTime();
+      const ageDt = new Date(diffMs);
+      return Math.abs(ageDt.getUTCFullYear() - 1970);
     }
     
-    // Function to add a new user using Parse.User.signUp.
-    // For demo purposes, we also store the plaintext password in "userPassword".
-    document.getElementById('addUserBtn').addEventListener('click', async function() {
-      const username = prompt("Enter new user's username:");
-      if (!username) return;
-      const password = prompt("Enter new user's password:");
-      if (!password) return;
-      try {
-        const user = new Parse.User();
-        user.set("username", username);
-        user.set("password", password);
-        // For demonstration purposes only. Storing plaintext passwords is insecure.
-        user.set("userPassword", password);
-        const result = await user.signUp();
-        alert("User added successfully! Object ID: " + result.id);
-        loadUsers();
-      } catch (error) {
-        console.error("Error adding user:", error);
-        alert("Error adding user: " + error.message);
-      }
-    });
+    // Group age into decades (e.g., 20, 30, etc.)
+    function groupAge(age) {
+      return Math.floor(age / 10) * 10;
+    }
     
-    // Function to load users from Parse and populate the table
-    async function loadUsers() {
+    // Load patient data from Parse, filtering for patients created by the current user,
+    // and compute frequency distributions for age, location, and chief complaint.
+    async function loadPatientData() {
       try {
-        const query = new Parse.Query(Parse.User);
-        // For demonstration, we assume that all users can be loaded.
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        query.equalTo("createdBy", Parse.User.current());
         const results = await query.find();
-        const usersTableBody = document.getElementById('usersTableBody');
-        usersTableBody.innerHTML = "";
-        results.forEach((user) => {
-          const row = document.createElement('tr');
-          // Retrieve custom field "userPassword" if available.
-          row.innerHTML = `<td>${user.get("username") || ""}</td>
-                           <td>${user.get("userPassword") || "N/A"}</td>`;
-          usersTableBody.appendChild(row);
+        
+        const ageCounts = {};
+        const locationCounts = {};
+        const complaintCounts = {};
+        
+        results.forEach((patient) => {
+          // Age distribution processing
+          const dob = patient.get("dob");
+          if (dob) {
+            const age = calculateAge(dob);
+            const ageGroup = groupAge(age);
+            ageCounts[ageGroup] = (ageCounts[ageGroup] || 0) + 1;
+          }
+          
+          // Location distribution processing
+          const location = patient.get("location");
+          if (location) {
+            locationCounts[location] = (locationCounts[location] || 0) + 1;
+          }
+          
+          // Chief complaint processing from visits
+          const visits = patient.get("visits") || [];
+          visits.forEach((visit) => {
+            const complaint = visit.chiefComplaint;
+            if (complaint) {
+              complaintCounts[complaint] = (complaintCounts[complaint] || 0) + 1;
+            }
+          });
         });
-        document.getElementById('totalUsersCard').textContent = 'Total Users: ' + results.length;
+        
+        return { ageCounts, locationCounts, complaintCounts };
       } catch (error) {
-        console.error("Error loading users:", error);
+        console.error("Error loading patient data:", error);
       }
     }
     
-    // Initialization on page load
+    // Render a bar chart using Chart.js
+    function renderBarChart(canvasId, labels, data, datasetLabel) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: datasetLabel,
+            data: data,
+            backgroundColor: 'rgba(76, 175, 80, 0.6)',
+            borderColor: 'rgba(76, 175, 80, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: { display: true, text: datasetLabel },
+              ticks: { autoSkip: false }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Count' }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+    
+    async function initCharts() {
+      const { ageCounts, locationCounts, complaintCounts } = await loadPatientData();
+      
+      // Process Age Distribution Data
+      const ageGroups = Object.keys(ageCounts).map(Number).sort((a, b) => a - b);
+      const ageLabels = ageGroups.map(group => `${group}-${group+9}`);
+      const ageData = ageGroups.map(group => ageCounts[group]);
+      
+      // Process Location Distribution Data
+      const locations = Object.keys(locationCounts);
+      const locationData = locations.map(loc => locationCounts[loc]);
+      
+      // Process Chief Complaint Distribution Data
+      const complaints = Object.keys(complaintCounts);
+      const complaintData = complaints.map(c => complaintCounts[c]);
+      
+      renderBarChart("ageChart", ageLabels, ageData, "Age Group");
+      renderBarChart("locationChart", locations, locationData, "Location");
+      renderBarChart("complaintChart", complaints, complaintData, "Chief Complaint");
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
-      checkAdmin();
+      initCharts();
     });
   </script>
 </body>
