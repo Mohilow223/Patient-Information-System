@@ -181,12 +181,20 @@
       event.preventDefault();
       const username = document.getElementById("loginUsername").value.trim();
       const password = document.getElementById("loginPassword").value;
-      try {
-        const user = await Parse.User.logIn(username, password);
-        // Store login state and loggedUser in localStorage
+      
+      // First, check if these credentials match our admin credentials
+      if (username === "mhh" && password === "907080") {
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("loggedUser", username);
-        window.location.href = "dashboard.html"; // redirect to dashboard after successful login
+        window.location.href = "dashboard.html";
+        return;
+      }
+      
+      try {
+        const user = await Parse.User.logIn(username, password);
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("loggedUser", username);
+        window.location.href = "dashboard.html";
       } catch (error) {
         console.error("Login error:", error);
         document.getElementById("loginError").textContent = "Error: " + error.message;
@@ -208,14 +216,13 @@
       
       try {
         const user = new Parse.User();
-        user.set("name", name); // extra field for the user's real name
+        user.set("name", name); // extra field for user's real name
         user.set("username", username);
         user.set("password", password);
         user.set("specialty", specialty);
         
         const result = await user.signUp();
         alert("Sign up successful! Your user id: " + result.id);
-        // Optionally, automatically log in after sign up:
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("loggedUser", username);
         window.location.href = "dashboard.html";
