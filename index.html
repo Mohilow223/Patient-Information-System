@@ -14,10 +14,10 @@
   </script>
   <style>
     :root {
-      --primary-color: #4CAF50;
+      --primary-color: #4CAF50;  
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
-      --accent-color: #FF5722; /* For "Show patients list" button */
+      --accent-color: #FF5722;
       --bg-color: #f9f9f9;
       --section-bg: #ffffff;
       --heading-bg: #4CAF50;
@@ -85,7 +85,7 @@
     form {
       margin: 0;
     }
-    /* Flex container for sections */
+    /* Sections layout */
     .sections-container {
       display: flex;
       flex-wrap: wrap;
@@ -101,7 +101,6 @@
       padding: var(--spacing);
       box-sizing: border-box;
     }
-    /* Section headings in colored boxes */
     section h2 {
       font-size: var(--section-heading-size);
       margin-bottom: 10px;
@@ -192,7 +191,7 @@
   </style>
 </head>
 <body>
-  <!-- Check if user is logged in; if not, redirect to login page -->
+  <!-- Check if user is logged in -->
   <script>
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
@@ -275,12 +274,12 @@
     
     document.addEventListener('DOMContentLoaded', setupHeader);
     
-    // Generate a unique patient ID using current time and random value
+    // Generate a unique patient ID (for online saving, you can use Parse auto-generated id)
     function generatePatientID() {
       return 'PID' + Date.now() + Math.floor(Math.random() * 1000);
     }
     
-    // Read multiple files as Data URLs for investigations
+    // Read multiple files as Data URLs (for investigations)
     function readFilesAsDataURL(files) {
       const promises = [];
       for (let i = 0; i < files.length; i++) {
@@ -470,25 +469,33 @@
     }
     document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
     
-    // Handle form submission: gather all dynamic data and update the Parse object
-    document.getElementById('editPatientForm').addEventListener('submit', async function(event) {
+    // Handle form submission: check for duplicate patient by name before saving online using Parse
+    document.getElementById('patientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
-      const patientId = getQueryParam('patientId');
-      if (!patientId) {
-        alert("No patient selected for editing.");
-        window.location.href = 'patientTable.html';
-        return;
-      }
+      
+      const patientName = document.getElementById('patientName').value.trim();
+      
+      // Use a case-insensitive regular expression to find an exact match for the patient name
+      const Patient = Parse.Object.extend("Patient");
+      const query = new Parse.Query(Patient);
+      query.matches("patientName", "^" + patientName + "$", "i");
+      
       try {
-        const Patient = Parse.Object.extend("Patient");
-        const query = new Parse.Query(Patient);
-        const patient = await query.get(patientId);
+        const duplicate = await query.first();
+        if (duplicate) {
+          if (confirm("A patient with this name already exists. Do you want to edit the existing record?")) {
+            window.location.href = "editPatient.html?patientId=" + duplicate.id;
+            return;
+          } else {
+            // Stop the process if the user cancels
+            return;
+          }
+        }
         
-        // Update fields from form values
-        patient.set("patientName", document.getElementById('patientName').value.trim());
-        patient.set("dob", document.getElementById('dob').value);
-        patient.set("location", document.getElementById('location').value.trim());
-        patient.set("phone", document.getElementById('phone').value.trim());
+        // Gather other form values
+        const dob = document.getElementById('dob').value;
+        const location = document.getElementById('location').value.trim();
+        const phone = document.getElementById('phone').value.trim();
         
         // Gather dynamic entries for Medical History
         const diseasesContainer = document.getElementById('diseasesContainer');
@@ -497,14 +504,13 @@
         for (let entry of diseaseEntries) {
           const inputs = entry.querySelectorAll('input[type="text"]');
           if (inputs.length >= 2) {
-            const diseaseName = inputs[0].value;
-            const diseaseMeds = inputs[1].value;
-            if (diseaseName && diseaseMeds) {
-              diseasesArray.push({ disease: diseaseName, diseaseMedications: diseaseMeds });
+            const dName = inputs[0].value;
+            const dMeds = inputs[1].value;
+            if (dName && dMeds) {
+              diseasesArray.push({ disease: dName, diseaseMedications: dMeds });
             }
           }
         }
-        patient.set("pastMedicalHistory", diseasesArray);
         
         const surgeriesContainer = document.getElementById('surgeriesContainer');
         const surgeryEntries = surgeriesContainer.getElementsByClassName('dynamic-entry');
@@ -512,15 +518,14 @@
         for (let entry of surgeryEntries) {
           const inputs = entry.querySelectorAll('input');
           if (inputs.length >= 3) {
-            const surgeryDate = inputs[0].value;
-            const surgeryType = inputs[1].value;
-            const surgeryIndication = inputs[2].value;
-            if (surgeryDate && surgeryType && surgeryIndication) {
-              surgeriesArray.push({ date: surgeryDate, type: surgeryType, indication: surgeryIndication });
+            const sDate = inputs[0].value;
+            const sType = inputs[1].value;
+            const sIndication = inputs[2].value;
+            if (sDate && sType && sIndication) {
+              surgeriesArray.push({ date: sDate, type: sType, indication: sIndication });
             }
           }
         }
-        patient.set("pastSurgicalHistory", surgeriesArray);
         
         const medicationsContainer = document.getElementById('medicationsContainer');
         const medicationEntries = medicationsContainer.getElementsByClassName('dynamic-entry');
@@ -528,15 +533,14 @@
         for (let entry of medicationEntries) {
           const inputs = entry.querySelectorAll('input');
           if (inputs.length >= 3) {
-            const medName = inputs[0].value;
+            const mName = inputs[0].value;
             const dosage = inputs[1].value;
             const frequency = inputs[2].value;
-            if (medName && dosage && frequency) {
-              medicationsArray.push({ name: medName, dosage: dosage, frequency: frequency });
+            if (mName && dosage && frequency) {
+              medicationsArray.push({ name: mName, dosage: dosage, frequency: frequency });
             }
           }
         }
-        patient.set("medications", medicationsArray);
         
         const visitsContainer = document.getElementById('visitsContainer');
         const visitEntries = visitsContainer.getElementsByClassName('visit-entry');
@@ -548,70 +552,36 @@
             visitsArray.push({ date: dateVal, chiefComplaint: complaintVal });
           }
         }
-        patient.set("visits", visitsArray);
         
-        // Handle investigations update if new files are attached
+        // Handle investigations (file attachments)
         const investigationsInput = document.getElementById('investigations');
         const files = investigationsInput.files;
+        let investigationsArray = [];
         if (files.length > 0) {
-          const investigationsArray = await readFilesAsDataURL(files);
-          patient.set("investigations", investigationsArray);
+          investigationsArray = await readFilesAsDataURL(files);
         }
         
-        await patient.save();
-        alert("Patient details updated successfully.");
-        window.location.href = 'patientTable.html';
+        // Create a new Parse object for the "Patient" class
+        const newPatient = new Patient();
+        newPatient.set("patientName", patientName);
+        newPatient.set("dob", dob);
+        newPatient.set("location", location);
+        newPatient.set("phone", phone);
+        newPatient.set("pastMedicalHistory", diseasesArray);
+        newPatient.set("pastSurgicalHistory", surgeriesArray);
+        newPatient.set("medications", medicationsArray);
+        newPatient.set("visits", visitsArray);
+        newPatient.set("investigations", investigationsArray);
+        newPatient.set("registrationDate", new Date().toISOString());
+        
+        const savedPatient = await newPatient.save();
+        alert("Patient saved online successfully! Object ID: " + savedPatient.id);
+        document.getElementById('patientForm').reset();
       } catch (error) {
-        console.error("Error updating patient:", error);
-        alert("Error updating patient: " + error.message);
+        console.error("Error saving patient:", error);
+        alert("Error saving patient: " + error.message);
       }
     });
-    
-    // Helper function to display investigation thumbnails
-    function displayInvestigations(investigations) {
-      const container = document.getElementById('investigationsContainer');
-      container.innerHTML = '';
-      if (investigations && investigations.length > 0) {
-        investigations.forEach((imgData, idx) => {
-          const img = document.createElement('img');
-          img.src = imgData;
-          img.alt = 'Investigation ' + (idx + 1);
-          img.title = 'Click to view full image';
-          img.addEventListener('click', () => {
-            const newWindow = window.open('', '_blank');
-            newWindow.document.write(`
-              <html>
-              <head>
-                <title>Investigation Image</title>
-                <style>
-                  body {
-                    margin: 0;
-                    padding: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #000;
-                  }
-                  img {
-                    max-width: 100%;
-                    max-height: 100vh;
-                  }
-                </style>
-              </head>
-              <body>
-                <img src="${imgData}" alt="Investigation Image"/>
-              </body>
-              </html>
-            `);
-          });
-          container.appendChild(img);
-        });
-      } else {
-        container.innerHTML = '<p>No investigation images attached.</p>';
-      }
-    }
-    
-    document.addEventListener('DOMContentLoaded', loadPatientDetails);
   </script>
 </body>
 </html>
