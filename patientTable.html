@@ -76,18 +76,20 @@
       padding: 10px;
       border-radius: var(--border-radius);
     }
-    /* Search field */
+    /* Search container styling */
     .search-container {
       text-align: center;
       margin-bottom: var(--spacing);
     }
     .search-container input {
-      padding: 8px;
+      padding: 10px;
       width: 50%;
       font-size: var(--font-size);
       border: 1px solid #ccc;
       border-radius: var(--border-radius);
+      outline: none;
     }
+    /* Table styling */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -242,16 +244,16 @@
       }
     }
     
-    // Filter table based on search input
+    // Filter table rows based on search input (search by patient name)
     function filterTable() {
       const input = document.getElementById("searchInput");
       const filter = input.value.toLowerCase();
       const table = document.getElementById("patientTable");
       const tr = table.getElementsByTagName("tr");
       
-      // Loop through all table rows, except the header row
+      // Start at index 1 to skip header row
       for (let i = 1; i < tr.length; i++) {
-        const td = tr[i].getElementsByTagName("td")[1]; // Assuming name is in the second column
+        const td = tr[i].getElementsByTagName("td")[1]; // Patient name column
         if (td) {
           const txtValue = td.textContent || td.innerText;
           if (txtValue.toLowerCase().indexOf(filter) > -1) {
@@ -263,12 +265,12 @@
       }
     }
     
-    // Redirect to edit page with patientId as query parameter
+    // Function to redirect to the edit page with patientId as query parameter
     function showPatient(patientId) {
       window.location.href = "editPatient.html?patientId=" + patientId;
     }
     
-    // Delete a patient using Parse
+    // Function to delete a patient using Parse
     async function deletePatient(patientId) {
       if (confirm("Are you sure you want to delete this patient?")) {
         try {
