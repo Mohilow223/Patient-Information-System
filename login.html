@@ -18,11 +18,12 @@
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
       --bg-color: #f9f9f9;
-      --card-bg: #fff;
-      --border-radius: 8px;
-      --font-size: 1rem;
-      --heading-font-size: 2rem;
-      --spacing: 20px;
+      --card-bg: #ffffff;
+      --border-radius: 12px;
+      --font-size: 1.1rem;
+      --heading-font-size: 2.5rem;
+      --button-font-size: 1.2rem;
+      --spacing: 25px;
     }
     body {
       font-family: 'Roboto', sans-serif;
@@ -30,8 +31,8 @@
       margin: 0;
       padding: var(--spacing);
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       min-height: 100vh;
       color: #333;
     }
@@ -39,8 +40,8 @@
       background: var(--card-bg);
       padding: var(--spacing);
       border-radius: var(--border-radius);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 450px;
       width: 100%;
     }
     h1 {
@@ -50,18 +51,20 @@
       color: var(--primary-color);
     }
     .toggle-buttons {
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing);
       margin-bottom: var(--spacing);
     }
     .toggle-buttons button {
-      padding: 10px 20px;
-      margin: 0 5px;
+      flex: 1;
+      padding: 12px;
+      font-size: var(--button-font-size);
       border: none;
       border-radius: var(--border-radius);
       cursor: pointer;
       background: var(--primary-color);
       color: #fff;
-      font-size: var(--font-size);
       transition: background 0.3s;
     }
     .toggle-buttons button:hover {
@@ -75,38 +78,39 @@
     }
     label {
       display: block;
-      margin-top: 10px;
+      margin-top: 15px;
       font-weight: 500;
     }
     input[type="text"],
     input[type="password"],
-    input[type="date"],
     select {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
+      padding: 12px;
+      margin-top: 8px;
       font-size: var(--font-size);
       border: 1px solid #ccc;
       border-radius: var(--border-radius);
+      box-sizing: border-box;
     }
     button.submit-btn {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       margin-top: var(--spacing);
       background: var(--primary-color);
       color: #fff;
       border: none;
       border-radius: var(--border-radius);
+      font-size: var(--button-font-size);
       cursor: pointer;
-      font-size: var(--font-size);
-      transition: background 0.3s;
+      transition: background 0.3s, transform 0.2s;
     }
     button.submit-btn:hover {
       background: var(--primary-dark);
+      transform: scale(1.03);
     }
     .error {
       color: red;
-      margin-top: 10px;
+      margin-top: 15px;
       text-align: center;
       font-weight: bold;
     }
@@ -115,10 +119,8 @@
 <body>
   <div class="container">
     <h1>Patient Information System</h1>
-    
-    <!-- Toggle buttons for Login and Sign Up -->
     <div class="toggle-buttons">
-      
+      <button id="loginToggle">Login</button>
       <button id="signupToggle">Sign Up</button>
     </div>
     
@@ -182,7 +184,7 @@
       const username = document.getElementById("loginUsername").value.trim();
       const password = document.getElementById("loginPassword").value;
       
-      // First, check if these credentials match our admin credentials
+      // Check for admin credentials (hard-coded)
       if (username === "mhh" && password === "907080") {
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("loggedUser", username);
@@ -216,10 +218,12 @@
       
       try {
         const user = new Parse.User();
-        user.set("name", name); // extra field for user's real name
+        user.set("name", name);  // extra field for real name
         user.set("username", username);
         user.set("password", password);
         user.set("specialty", specialty);
+        // For demonstration purposes only: you might also store the plaintext password in a custom field (not recommended for production)
+        user.set("userPassword", password);
         
         const result = await user.signUp();
         alert("Sign up successful! Your user id: " + result.id);
