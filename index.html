@@ -14,7 +14,7 @@
   </script>
   <style>
     :root {
-      --primary-color: #4CAF50;  
+      --primary-color: #4CAF50;
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
       --accent-color: #FF5722;
@@ -46,7 +46,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       position: relative;
     }
-    /* Header with user details */
+    /* Header */
     .header {
       display: flex;
       justify-content: flex-end;
@@ -71,7 +71,6 @@
     .header button:hover {
       background: #006ae0;
     }
-    /* Main Heading */
     h1 {
       font-size: var(--heading-font-size);
       text-align: center;
@@ -85,7 +84,6 @@
     form {
       margin: 0;
     }
-    /* Sections layout */
     .sections-container {
       display: flex;
       flex-wrap: wrap;
@@ -151,7 +149,6 @@
     button:hover {
       background: var(--primary-dark);
     }
-    /* "Show patients list" button */
     .button-container button {
       background: var(--accent-color);
       font-size: 1.2rem;
@@ -160,7 +157,6 @@
     .button-container button:hover {
       background: #e64a19;
     }
-    /* Dynamic entries styling */
     .dynamic-entry {
       border: 1px solid #ccc;
       border-radius: var(--border-radius);
@@ -191,8 +187,8 @@
   </style>
 </head>
 <body>
-  <!-- Check if user is logged in -->
   <script>
+    // Redirect to login if user is not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -274,7 +270,7 @@
     
     document.addEventListener('DOMContentLoaded', setupHeader);
     
-    // Generate a unique patient ID (for online saving, you can use Parse auto-generated id)
+    // Generate a unique patient ID using current time and random value (optional)
     function generatePatientID() {
       return 'PID' + Date.now() + Math.floor(Math.random() * 1000);
     }
@@ -469,13 +465,14 @@
     }
     document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
     
-    // Handle form submission: check for duplicate patient by name before saving online using Parse
+    // Handle form submission: check for duplicate patient by name (case-insensitive)
+    // before saving online using Parse
     document.getElementById('patientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       
       const patientName = document.getElementById('patientName').value.trim();
       
-      // Use a case-insensitive regular expression to find an exact match for the patient name
+      // Query for an existing patient with the same name (case-insensitive)
       const Patient = Parse.Object.extend("Patient");
       const query = new Parse.Query(Patient);
       query.matches("patientName", "^" + patientName + "$", "i");
@@ -487,7 +484,7 @@
             window.location.href = "editPatient.html?patientId=" + duplicate.id;
             return;
           } else {
-            // Stop the process if the user cancels
+            // If not editing, cancel the save
             return;
           }
         }
@@ -573,6 +570,8 @@
         newPatient.set("visits", visitsArray);
         newPatient.set("investigations", investigationsArray);
         newPatient.set("registrationDate", new Date().toISOString());
+        // Associate patient with the current user
+        newPatient.set("createdBy", Parse.User.current());
         
         const savedPatient = await newPatient.save();
         alert("Patient saved online successfully! Object ID: " + savedPatient.id);
@@ -582,6 +581,12 @@
         alert("Error saving patient: " + error.message);
       }
     });
+    
+    // Helper function to get query parameter from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
   </script>
 </body>
 </html>
