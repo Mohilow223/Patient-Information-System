@@ -282,7 +282,7 @@
   </div>
   
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -293,7 +293,7 @@
       });
     }
     
-    // Ensure only admin (mhh) can access
+    // Check that the logged-in user is admin ("mhh")
     function checkAdmin() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       if (loggedUser !== "mhh") {
@@ -302,19 +302,18 @@
       }
     }
     
-    // Load users from Parse; set a higher limit to fetch all users from _User table
+    // Load users from Parse (_User table) and compute # of patients per user
     async function loadUsers() {
       try {
         const query = new Parse.Query(Parse.User);
-        query.limit(1000); // Increase if needed
+        query.limit(1000); // fetch all users
         const users = await query.find();
         
-        // Compute number of patients per user
+        // Compute patient counts per user
         const patientCounts = await getUserPatientCounts();
         
         const usersTableBody = document.getElementById('usersTableBody');
         usersTableBody.innerHTML = "";
-        
         users.forEach((user) => {
           const name = user.get("name") || "N/A";
           const specialty = user.get("specialty") || "N/A";
@@ -322,7 +321,6 @@
           const password = user.get("userPassword") || "N/A"; // For demo purposes only
           const userId = user.id;
           const numPatients = patientCounts[userId] || 0;
-          
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${name}</td>
@@ -342,7 +340,7 @@
       }
     }
     
-    // Compute the number of patients per user
+    // Compute patient counts per user (from the Patient class)
     async function getUserPatientCounts() {
       const counts = {};
       try {
@@ -362,6 +360,35 @@
       }
       return counts;
     }
+    
+    // Add User function using Parse.User.signUp (for demo, plaintext stored in custom field "userPassword")
+    document.getElementById('addUserBtn').addEventListener('click', async function() {
+      const username = prompt("Enter new user's username:");
+      if (!username) return;
+      const password = prompt("Enter new user's password:");
+      if (!password) return;
+      const name = prompt("Enter new user's name:");
+      if (!name) return;
+      const specialty = prompt("Enter new user's specialty (e.g., General surgery, Medicine, etc.):");
+      if (!specialty) return;
+      
+      try {
+        const newUser = new Parse.User();
+        newUser.set("name", name);
+        newUser.set("username", username);
+        newUser.set("password", password);
+        newUser.set("specialty", specialty);
+        // For demonstration only (not secure):
+        newUser.set("userPassword", password);
+        
+        const result = await newUser.signUp();
+        alert("User added successfully! User ID: " + result.id);
+        loadUsers();
+      } catch (error) {
+        console.error("Error adding user:", error);
+        alert("Error adding user: " + error.message);
+      }
+    });
     
     // Edit user: redirect to editUser.html with userId as query parameter
     function editUser(userId) {
@@ -418,7 +445,7 @@
       window.location.href = "editPatient.html?patientId=" + patientId;
     }
     
-    // Load patient trends: create bar charts for patients by specialty and age distribution
+    // Load patient trends: create two bar charts
     async function loadPatientTrends() {
       try {
         // Trend 1: Patients by Specialty (group by createdBy user's specialty)
@@ -458,6 +485,19 @@
       }
     }
     
+    // Helper: Calculate age from a dob string ("YYYY-MM-DD")
+    function calculateAge(dobString) {
+      const dob = new Date(dobString);
+      const diffMs = Date.now() - dob.getTime();
+      const ageDt = new Date(diffMs);
+      return Math.abs(ageDt.getUTCFullYear() - 1970);
+    }
+    
+    // Group age into decades
+    function groupAge(age) {
+      return Math.floor(age / 10) * 10;
+    }
+    
     // Render bar chart using Chart.js
     function renderBarChart(canvasId, labels, data, datasetLabel) {
       const ctx = document.getElementById(canvasId).getContext('2d');
@@ -493,7 +533,7 @@
       });
     }
     
-    // Initialization on page load
+    // Initialization
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
       checkAdmin();
