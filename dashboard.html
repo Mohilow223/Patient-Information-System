@@ -74,53 +74,36 @@
       padding: 10px;
       border-radius: var(--border-radius);
     }
-    /* Summary cards */
-    .summary-cards {
-      display: flex;
-      gap: var(--spacing);
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: var(--spacing);
-    }
-    .card {
-      flex: 1 1 200px;
-      background: var(--primary-color);
-      color: #fff;
-      padding: var(--spacing);
-      border-radius: var(--border-radius);
-      text-align: center;
-      font-size: 1.2rem;
-    }
-    /* Users section */
-    .user-section {
+    /* Users Section (only for admin) */
+    #usersSection {
       margin-bottom: var(--spacing);
       padding: var(--spacing);
       border: 1px solid #ddd;
       border-radius: var(--border-radius);
       background: #fff;
     }
-    .user-section h2 {
+    #usersSection h2 {
       margin-top: 0;
       font-size: 1.5rem;
       margin-bottom: var(--spacing);
       text-align: center;
     }
-    .user-section table {
+    #usersSection table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: var(--spacing);
     }
-    .user-section th, .user-section td {
+    #usersSection th, #usersSection td {
       padding: 10px;
       border: 1px solid #ddd;
       font-size: var(--font-size);
       text-align: left;
     }
-    .user-section th {
+    #usersSection th {
       background: var(--primary-color);
       color: #fff;
     }
-    .user-section button {
+    #usersSection button {
       background: var(--primary-color);
       padding: 8px 12px;
       font-size: 1rem;
@@ -130,10 +113,10 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    .user-section button:hover {
+    #usersSection button:hover {
       background: var(--primary-dark);
     }
-    /* Navigation button */
+    /* Navigation Button */
     .button-container {
       text-align: center;
       margin-top: var(--spacing);
@@ -146,14 +129,51 @@
       border: none;
       border-radius: var(--border-radius);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s ease;
     }
     .button-container button:hover {
       background: #e64a19;
     }
+    /* Action buttons for patient table */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    .action-buttons button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background 0.3s;
+      min-width: 70px;
+    }
+    .show-btn {
+      background-color: #2196F3;
+      color: #fff;
+    }
+    .show-btn:hover {
+      background-color: #1976D2;
+    }
+    .delete-btn {
+      background-color: #F44336;
+      color: #fff;
+    }
+    .delete-btn:hover {
+      background-color: #D32F2F;
+    }
   </style>
 </head>
 <body>
+  <script>
+    // Redirect to login if not logged in
+    if (localStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
   <div class="container">
     <!-- Header -->
     <div class="header">
@@ -161,13 +181,15 @@
       <button id="logoutBtn">Logout</button>
     </div>
     <h1>Admin Dashboard</h1>
+    
+    <!-- Summary Cards -->
     <div class="summary-cards">
       <div class="card" id="totalPatientsCard">Total Patients: 0</div>
       <div class="card" id="totalUsersCard">Total Users: 0</div>
     </div>
     
-    <!-- Users Section -->
-    <div class="user-section">
+    <!-- Users Section (only visible for admin) -->
+    <div id="usersSection">
       <h2>Registered Users</h2>
       <table id="usersTable">
         <thead>
@@ -189,7 +211,7 @@
   </div>
   
   <script>
-    // Setup header: show logged-in user and logout functionality
+    // Setup header: display logged-in username and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -200,7 +222,7 @@
       });
     }
     
-    // Add user using Parse.User.signUp
+    // Function to add a user (only for admin)
     document.getElementById('addUserBtn').addEventListener('click', async function() {
       const username = prompt("Enter new user's username:");
       if (!username) return;
@@ -211,7 +233,7 @@
         const user = new Parse.User();
         user.set("username", username);
         user.set("password", password);
-        // Optionally, set additional fields (e.g., email) here.
+        // Optionally add other fields here (e.g., email)
         const result = await user.signUp();
         alert("User added successfully! Object ID: " + result.id);
         loadUsers();
@@ -221,7 +243,7 @@
       }
     });
     
-    // Load users from Parse
+    // Function to load users from Parse
     async function loadUsers() {
       try {
         const query = new Parse.Query(Parse.User);
@@ -239,7 +261,7 @@
       }
     }
     
-    // Load patients count from Parse
+    // Function to load patients count from Parse
     async function loadPatientsCount() {
       try {
         const Patient = Parse.Object.extend("Patient");
@@ -251,10 +273,16 @@
       }
     }
     
+    // Initialize: setup header, load patients count and (if admin) load users
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
-      loadUsers();
       loadPatientsCount();
+      // Only display the users section if the logged user is admin ("mhh")
+      if (localStorage.getItem('loggedUser') !== "mhh") {
+        document.getElementById('usersSection').style.display = "none";
+      } else {
+        loadUsers();
+      }
     });
   </script>
 </body>
