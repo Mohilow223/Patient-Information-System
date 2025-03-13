@@ -19,6 +19,8 @@
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
       --accent-color: #FF5722;
+      --button-bg: #FF5722;
+      --button-hover: #E64A19;
       --bg-color: #f9f9f9;
       --card-bg: #ffffff;
       --border-radius: 8px;
@@ -40,9 +42,8 @@
       background: var(--card-bg);
       padding: var(--spacing);
       border-radius: var(--border-radius);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    /* Header */
     .header {
       display: flex;
       justify-content: space-between;
@@ -57,20 +58,23 @@
     .user-info {
       font-size: 1rem;
     }
+    .user-info span {
+      margin-right: 10px;
+    }
     .header button {
-      padding: 6px 12px;
-      font-size: 0.9rem;
       background: var(--secondary-color);
       border: none;
       border-radius: var(--border-radius);
+      padding: 8px 16px;
       color: #fff;
+      font-size: 0.9rem;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s, box-shadow 0.3s;
     }
     .header button:hover {
       background: #006ae0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
-    /* Sections */
     .section {
       margin-bottom: var(--spacing);
       border: 1px solid #ddd;
@@ -96,8 +100,8 @@
     th, td {
       padding: 10px;
       border: 1px solid #ddd;
-      text-align: left;
       font-size: var(--font-size);
+      text-align: left;
     }
     th {
       background: var(--primary-color);
@@ -107,49 +111,52 @@
       background: #f9f9f9;
     }
     .action-buttons button {
-      padding: 6px 10px;
-      font-size: 0.9rem;
+      background: var(--secondary-color);
       border: none;
       border-radius: var(--border-radius);
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      color: #fff;
       cursor: pointer;
       margin-right: 5px;
-      transition: background 0.3s;
+      transition: background 0.3s, box-shadow 0.3s;
     }
-    .edit-btn {
-      background-color: #2196F3;
-      color: #fff;
+    .action-buttons .edit-btn {
+      background: #2196F3;
     }
-    .edit-btn:hover {
-      background-color: #1976D2;
+    .action-buttons .edit-btn:hover {
+      background: #1976D2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-    .delete-btn {
-      background-color: #F44336;
-      color: #fff;
+    .action-buttons .delete-btn {
+      background: #F44336;
     }
-    .delete-btn:hover {
-      background-color: #D32F2F;
+    .action-buttons .delete-btn:hover {
+      background: #D32F2F;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-    /* Navigation Buttons */
     .nav-buttons {
       text-align: center;
       margin-top: var(--spacing);
       display: flex;
       gap: var(--spacing);
-      flex-wrap: wrap;
       justify-content: center;
+      flex-wrap: wrap;
     }
     .nav-buttons button {
-      background: var(--accent-color);
+      background: var(--button-bg);
       color: #fff;
       padding: 14px 28px;
       font-size: 1.2rem;
       border: none;
       border-radius: var(--border-radius);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
     }
     .nav-buttons button:hover {
-      background: #e64a19;
+      background: var(--button-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -170,7 +177,7 @@
       </div>
     </div>
     
-    <!-- Users Section (for admin only) -->
+    <!-- Users Section (Admin Only) -->
     <div class="section" id="usersSection">
       <h2>Registered Users</h2>
       <table id="usersTable">
@@ -182,7 +189,7 @@
           </tr>
         </thead>
         <tbody id="usersTableBody">
-          <!-- User rows will be loaded here -->
+          <!-- Users will be loaded here -->
         </tbody>
       </table>
       <button id="addUserBtn">Add User</button>
@@ -203,12 +210,12 @@
           </tr>
         </thead>
         <tbody id="patientsTableBody">
-          <!-- Patient rows will be loaded here -->
+          <!-- Patients will be loaded here -->
         </tbody>
       </table>
     </div>
     
-    <!-- Patient Trends by User Chart -->
+    <!-- Patient Trends by User -->
     <div class="section" id="patientTrendsSection">
       <h2>Patient Trends by User</h2>
       <canvas id="patientCountChart"></canvas>
@@ -233,7 +240,7 @@
       });
     }
     
-    // Ensure this page is only accessible to admin (username "mhh")
+    // Ensure admin-only access
     function checkAdmin() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       if (loggedUser !== "mhh") {
@@ -242,7 +249,29 @@
       }
     }
     
-    // Load users from Parse
+    // Function to add a new user
+    document.getElementById('addUserBtn').addEventListener('click', async function() {
+      const username = prompt("Enter new user's username:");
+      if (!username) return;
+      const password = prompt("Enter new user's password:");
+      if (!password) return;
+      
+      try {
+        const user = new Parse.User();
+        user.set("username", username);
+        user.set("password", password);
+        // For demo purposes only. Storing plaintext passwords is not secure.
+        user.set("userPassword", password);
+        const result = await user.signUp();
+        alert("User added successfully! Object ID: " + result.id);
+        loadUsers();
+      } catch (error) {
+        console.error("Error adding user:", error);
+        alert("Error adding user: " + error.message);
+      }
+    });
+    
+    // Load registered users
     async function loadUsers() {
       try {
         const query = new Parse.Query(Parse.User);
@@ -251,7 +280,6 @@
         usersTableBody.innerHTML = "";
         results.forEach((user) => {
           const row = document.createElement('tr');
-          // For demo purposes, we assume a custom field "userPassword" exists
           row.innerHTML = `<td>${user.get("username") || ""}</td>
                            <td>${user.get("userPassword") || "N/A"}</td>
                            <td>
@@ -288,7 +316,7 @@
       }
     }
     
-    // Load patients (all patients, admin sees them all)
+    // Load patients (admin sees all patients)
     async function loadPatients() {
       try {
         const Patient = Parse.Object.extend("Patient");
@@ -325,69 +353,12 @@
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
-        // Admin sees all patients, so no filtering on createdBy
+        // Include the pointer "createdBy" for grouping
         query.include("createdBy");
         const results = await query.find();
         
-        // Group patients by username
         const userCounts = {};
         results.forEach((patient) => {
           const creator = patient.get("createdBy");
           if (creator) {
-            const username = creator.get("username") || "Unknown";
-            userCounts[username] = (userCounts[username] || 0) + 1;
-          }
-        });
-        
-        const usernames = Object.keys(userCounts);
-        const counts = usernames.map(username => userCounts[username]);
-        renderBarChart("patientCountChart", usernames, counts, "Patients Count");
-      } catch (error) {
-        console.error("Error loading patient trends:", error);
-      }
-    }
-    
-    // Render a bar chart using Chart.js
-    function renderBarChart(canvasId, labels, data, datasetLabel) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: datasetLabel,
-            data: data,
-            backgroundColor: 'rgba(76, 175, 80, 0.6)',
-            borderColor: 'rgba(76, 175, 80, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              title: { display: true, text: datasetLabel },
-              ticks: { autoSkip: false }
-            },
-            y: {
-              beginAtZero: true,
-              title: { display: true, text: 'Count' }
-            }
-          },
-          plugins: {
-            legend: { display: false }
-          }
-        }
-      });
-    }
-    
-    // Initialization on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      setupHeader();
-      checkAdmin();
-      loadUsers();
-      loadPatients();
-      loadPatientTrends();
-    });
-  </script>
-</body>
-</html>
+            const
