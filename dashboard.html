@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard - Patient Trends</title>
+  <title>Dashboard - Your Patient Trends</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Include Parse SDK and Chart.js -->
@@ -99,11 +99,10 @@
     }
     /* Navigation Buttons */
     .nav-buttons {
-      text-align: center;
-      margin-top: var(--spacing);
       display: flex;
       justify-content: center;
       gap: var(--spacing);
+      margin-top: var(--spacing);
       flex-wrap: wrap;
     }
     .nav-buttons button {
@@ -134,7 +133,7 @@
       <span id="welcomeUser">Welcome, Unknown</span>
       <button id="logoutBtn">Logout</button>
     </div>
-    <h1>Admin Dashboard</h1>
+    <h1>Dashboard</h1>
     
     <!-- Charts Container -->
     <div class="charts-container">
@@ -160,7 +159,7 @@
   </div>
   
   <script>
-    // Setup header and logout functionality
+    // Setup header: display logged-in username and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -171,7 +170,7 @@
       });
     }
     
-    // Helper: Calculate age from dob (assuming format "YYYY-MM-DD")
+    // Helper: Calculate age from a dob string ("YYYY-MM-DD")
     function calculateAge(dobString) {
       const dob = new Date(dobString);
       const diffMs = Date.now() - dob.getTime();
@@ -179,19 +178,18 @@
       return Math.abs(ageDt.getUTCFullYear() - 1970);
     }
     
-    // Group age into decades
+    // Group age into decades (e.g., 20, 30, etc.)
     function groupAge(age) {
       return Math.floor(age / 10) * 10;
     }
     
-    // Load patient data from Parse and compute frequencies
+    // Load patient data from Parse (for current user only) and compute frequencies
     async function loadPatientData() {
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
-        // Optionally, to show data for all patients, omit filter;
-        // To show only current user's patients, use:
-        // query.equalTo("createdBy", Parse.User.current());
+        // Filter by createdBy: only load patients created by the current user
+        query.equalTo("createdBy", Parse.User.current());
         const results = await query.find();
         
         const ageCounts = {};
@@ -199,7 +197,7 @@
         const complaintCounts = {};
         
         results.forEach((patient) => {
-          // Process age distribution
+          // Process age distribution if dob exists
           const dob = patient.get("dob");
           if (dob) {
             const age = calculateAge(dob);
@@ -213,7 +211,7 @@
             locationCounts[location] = (locationCounts[location] || 0) + 1;
           }
           
-          // Process chief complaint from visits
+          // Process chief complaint distribution from visits array
           const visits = patient.get("visits") || [];
           visits.forEach((visit) => {
             const complaint = visit.chiefComplaint;
