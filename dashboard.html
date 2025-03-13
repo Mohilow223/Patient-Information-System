@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard - Patient Trends</title>
+  <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Include Parse SDK and Chart.js -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
@@ -17,11 +18,13 @@
       --primary-color: #4CAF50;
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
+      --accent-color: #FF5722;
       --bg-color: #f9f9f9;
       --card-bg: #ffffff;
       --border-radius: 8px;
       --font-size: 1.1rem;
       --heading-font-size: 2rem;
+      --chart-heading-size: 1.3rem;
       --spacing: 20px;
     }
     body {
@@ -38,9 +41,8 @@
       padding: var(--spacing);
       border-radius: var(--border-radius);
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      position: relative;
     }
-    /* Header styling */
+    /* Header */
     .header {
       display: flex;
       justify-content: flex-end;
@@ -74,7 +76,7 @@
       padding: 10px;
       border-radius: var(--border-radius);
     }
-    /* Charts container */
+    /* Charts Container */
     .charts-container {
       display: flex;
       flex-wrap: wrap;
@@ -93,7 +95,29 @@
     .chart-box h2 {
       text-align: center;
       margin-bottom: var(--spacing);
-      font-size: 1.3rem;
+      font-size: var(--chart-heading-size);
+    }
+    /* Navigation Buttons */
+    .nav-buttons {
+      text-align: center;
+      margin-top: var(--spacing);
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing);
+      flex-wrap: wrap;
+    }
+    .nav-buttons button {
+      background: var(--accent-color);
+      color: #fff;
+      padding: 14px 28px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .nav-buttons button:hover {
+      background: #e64a19;
     }
   </style>
 </head>
@@ -127,10 +151,16 @@
         <canvas id="complaintChart"></canvas>
       </div>
     </div>
+    
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+      <button onclick="window.open('patientTable.html', '_blank')">Patients Table</button>
+      <button onclick="window.open('index.html', '_blank')">Data Entry Page</button>
+    </div>
   </div>
   
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -141,7 +171,7 @@
       });
     }
     
-    // Calculate age based on dob string "YYYY-MM-DD"
+    // Helper: Calculate age from dob (assuming format "YYYY-MM-DD")
     function calculateAge(dobString) {
       const dob = new Date(dobString);
       const diffMs = Date.now() - dob.getTime();
@@ -149,38 +179,41 @@
       return Math.abs(ageDt.getUTCFullYear() - 1970);
     }
     
-    // Group ages into decades (0-9, 10-19, etc.)
+    // Group age into decades
     function groupAge(age) {
-      return Math.floor(age / 10) * 10; // e.g., 23 -> 20, 37 -> 30
+      return Math.floor(age / 10) * 10;
     }
     
+    // Load patient data from Parse and compute frequencies
     async function loadPatientData() {
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
+        // Optionally, to show data for all patients, omit filter;
+        // To show only current user's patients, use:
+        // query.equalTo("createdBy", Parse.User.current());
         const results = await query.find();
         
-        // Prepare frequency objects for each chart
         const ageCounts = {};
         const locationCounts = {};
         const complaintCounts = {};
         
         results.forEach((patient) => {
-          // Process Age Distribution (if dob exists)
+          // Process age distribution
           const dob = patient.get("dob");
           if (dob) {
             const age = calculateAge(dob);
-            const ageGroup = groupAge(age); // e.g., 20, 30, etc.
+            const ageGroup = groupAge(age);
             ageCounts[ageGroup] = (ageCounts[ageGroup] || 0) + 1;
           }
           
-          // Process Location Distribution
+          // Process location distribution
           const location = patient.get("location");
           if (location) {
             locationCounts[location] = (locationCounts[location] || 0) + 1;
           }
           
-          // Process Chief Complaint Distribution from visits (if available)
+          // Process chief complaint from visits
           const visits = patient.get("visits") || [];
           visits.forEach((visit) => {
             const complaint = visit.chiefComplaint;
@@ -190,25 +223,21 @@
           });
         });
         
-        return {
-          age: ageCounts,
-          location: locationCounts,
-          complaint: complaintCounts
-        };
+        return { ageCounts, locationCounts, complaintCounts };
       } catch (error) {
         console.error("Error loading patient data:", error);
       }
     }
     
     // Render a bar chart using Chart.js
-    function renderBarChart(canvasId, labels, data, labelText) {
+    function renderBarChart(canvasId, labels, data, datasetLabel) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       new Chart(ctx, {
         type: 'bar',
         data: {
           labels: labels,
           datasets: [{
-            label: labelText,
+            label: datasetLabel,
             data: data,
             backgroundColor: 'rgba(76, 175, 80, 0.6)',
             borderColor: 'rgba(76, 175, 80, 1)',
@@ -218,7 +247,7 @@
         options: {
           scales: {
             x: {
-              title: { display: true, text: labelText },
+              title: { display: true, text: datasetLabel },
               ticks: { autoSkip: false }
             },
             y: {
@@ -234,21 +263,22 @@
     }
     
     async function initCharts() {
-      const freqData = await loadPatientData();
+      const { ageCounts, locationCounts, complaintCounts } = await loadPatientData();
       
-      // For age distribution: sort age groups numerically
-      const ageGroups = Object.keys(freqData.age).map(Number).sort((a, b) => a - b);
-      const ageData = ageGroups.map(group => freqData.age[group]);
+      // Process Age Distribution Data
+      const ageGroups = Object.keys(ageCounts).map(Number).sort((a, b) => a - b);
+      const ageLabels = ageGroups.map(group => `${group}-${group+9}`);
+      const ageData = ageGroups.map(group => ageCounts[group]);
       
-      // For location distribution:
-      const locations = Object.keys(freqData.location);
-      const locationData = locations.map(loc => freqData.location[loc]);
+      // Process Location Distribution Data
+      const locations = Object.keys(locationCounts);
+      const locationData = locations.map(loc => locationCounts[loc]);
       
-      // For chief complaint distribution:
-      const complaints = Object.keys(freqData.complaint);
-      const complaintData = complaints.map(c => freqData.complaint[c]);
+      // Process Chief Complaint Distribution Data
+      const complaints = Object.keys(complaintCounts);
+      const complaintData = complaints.map(c => complaintCounts[c]);
       
-      renderBarChart("ageChart", ageGroups.map(g => `${g}-${g+9}`), ageData, "Age Group");
+      renderBarChart("ageChart", ageLabels, ageData, "Age Group");
       renderBarChart("locationChart", locations, locationData, "Location");
       renderBarChart("complaintChart", complaints, complaintData, "Chief Complaint");
     }
