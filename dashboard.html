@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard - Patient Information System</title>
-  <!-- Import Google Font and Chart.js CDN -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Include Parse SDK -->
+  <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script>
+    // Initialize Parse with your Back4App credentials
+    Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
+    Parse.serverURL = 'https://parseapi.back4app.com/';
+  </script>
   <style>
     :root {
       --primary-color: #4CAF50;
       --primary-dark: #388E3C;
       --secondary-color: #007BFF;
+      --accent-color: #FF5722;
       --bg-color: #f9f9f9;
       --card-bg: #ffffff;
       --border-radius: 8px;
@@ -34,16 +40,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       position: relative;
     }
-    h1 {
-      font-size: var(--heading-font-size);
-      text-align: center;
-      margin-bottom: var(--spacing);
-      background: var(--primary-color);
-      color: #fff;
-      padding: 10px;
-      border-radius: var(--border-radius);
-    }
-    /* Header with user details */
+    /* Header */
     .header {
       display: flex;
       justify-content: flex-end;
@@ -63,11 +60,21 @@
       border-radius: var(--border-radius);
       color: #fff;
       cursor: pointer;
+      transition: background 0.3s;
     }
     .header button:hover {
       background: #006ae0;
     }
-    /* Summary Cards */
+    h1 {
+      font-size: var(--heading-font-size);
+      text-align: center;
+      margin-bottom: var(--spacing);
+      background: var(--primary-color);
+      color: #fff;
+      padding: 10px;
+      border-radius: var(--border-radius);
+    }
+    /* Summary cards */
     .summary-cards {
       display: flex;
       gap: var(--spacing);
@@ -84,125 +91,105 @@
       text-align: center;
       font-size: 1.2rem;
     }
-    /* Section for Registered Users */
-    .section {
+    /* Users section */
+    .user-section {
       margin-bottom: var(--spacing);
       padding: var(--spacing);
       border: 1px solid #ddd;
       border-radius: var(--border-radius);
       background: #fff;
     }
-    .section h2 {
+    .user-section h2 {
       margin-top: 0;
       font-size: 1.5rem;
       margin-bottom: var(--spacing);
       text-align: center;
     }
-    table {
+    .user-section table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: var(--spacing);
     }
-    th, td {
-      border: 1px solid #ddd;
+    .user-section th, .user-section td {
       padding: 10px;
+      border: 1px solid #ddd;
       font-size: var(--font-size);
       text-align: left;
     }
-    th {
+    .user-section th {
       background: var(--primary-color);
       color: #fff;
     }
-    /* Navigation Buttons */
-    .nav-buttons {
-      display: flex;
-      gap: var(--spacing);
-      justify-content: center;
-      margin-top: var(--spacing);
-      flex-wrap: wrap;
-    }
-    .nav-buttons button {
-      background: var(--secondary-color);
-      padding: 10px 20px;
-      font-size: var(--font-size);
+    .user-section button {
+      background: var(--primary-color);
+      padding: 8px 12px;
+      font-size: 1rem;
       border: none;
       border-radius: var(--border-radius);
       color: #fff;
       cursor: pointer;
+      transition: background 0.3s;
     }
-    .nav-buttons button:hover {
-      background: #006ae0;
+    .user-section button:hover {
+      background: var(--primary-dark);
     }
-    /* Chart Section */
-    .chart-container {
-      margin-bottom: var(--spacing);
+    /* Navigation button */
+    .button-container {
+      text-align: center;
+      margin-top: var(--spacing);
     }
-    canvas {
-      width: 100% !important;
-      max-height: 400px;
-    }
-    button {
+    .button-container button {
+      background: var(--accent-color);
+      color: #fff;
+      padding: 14px 28px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: var(--border-radius);
       cursor: pointer;
+      transition: background 0.3s;
+    }
+    .button-container button:hover {
+      background: #e64a19;
     }
   </style>
 </head>
 <body>
-  <script>
-    // Check if user is logged in; if not, redirect to login page.
-    if (localStorage.getItem('loggedIn') !== 'true') {
-      window.location.href = 'login.html';
-    }
-  </script>
   <div class="container">
-    <!-- Header with logged-in username and logout button -->
+    <!-- Header -->
     <div class="header">
       <span id="welcomeUser">Welcome, Unknown</span>
       <button id="logoutBtn">Logout</button>
     </div>
     <h1>Admin Dashboard</h1>
-    
-    <!-- Summary Cards -->
     <div class="summary-cards">
-      <div class="card" id="totalPatientsCard">
-        Total Patients: 0
-      </div>
-      <div class="card" id="totalUsersCard">
-        Total Users: 0
-      </div>
+      <div class="card" id="totalPatientsCard">Total Patients: 0</div>
+      <div class="card" id="totalUsersCard">Total Users: 0</div>
     </div>
     
-    <!-- Registered Users Section -->
-    <div class="section">
+    <!-- Users Section -->
+    <div class="user-section">
       <h2>Registered Users</h2>
       <table id="usersTable">
         <thead>
           <tr>
             <th>Username</th>
-            <th>Password</th>
           </tr>
         </thead>
         <tbody id="usersTableBody">
-          <!-- User rows will be inserted here -->
+          <!-- Users will be loaded here -->
         </tbody>
       </table>
       <button id="addUserBtn">Add User</button>
     </div>
     
-    <!-- Chart Section (Bar Chart) -->
-    <div class="section chart-container">
-      <h2>Patient Registration Trend</h2>
-      <canvas id="registrationChart"></canvas>
-    </div>
-    
-    <!-- Navigation Buttons -->
-    <div class="nav-buttons">
-      <button onclick="window.open('index.html', '_blank')">Go to Data Entry</button>
-      <button onclick="window.open('patientTable.html', '_blank')">Refresh Table</button>
+    <!-- Navigation Button -->
+    <div class="button-container">
+      <button onclick="window.open('patientTable.html', '_blank')">Show Patients List</button>
     </div>
   </div>
   
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header: show logged-in user and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -213,98 +200,61 @@
       });
     }
     
-    // Load registered users into table (show username and password)
-    function loadUsers() {
-      let users = localStorage.getItem('users');
-      users = users ? JSON.parse(users) : [];
-      const usersTableBody = document.getElementById('usersTableBody');
-      usersTableBody.innerHTML = '';
-      users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${user.username}</td><td>${user.password}</td>`;
-        usersTableBody.appendChild(row);
-      });
-      document.getElementById('totalUsersCard').textContent = 'Total Users: ' + users.length;
-    }
-    
-    // Load patient count and prepare registration trend data
-    function loadPatientData() {
-      let patients = localStorage.getItem('patients');
-      patients = patients ? JSON.parse(patients) : [];
-      document.getElementById('totalPatientsCard').textContent = 'Total Patients: ' + patients.length;
-      
-      // Build registration trend data using registrationDate property if available
-      const registrationCounts = {};
-      patients.forEach(patient => {
-        let regDate = patient.registrationDate ? new Date(patient.registrationDate) : new Date();
-        let dateKey = regDate.toISOString().split('T')[0];
-        registrationCounts[dateKey] = (registrationCounts[dateKey] || 0) + 1;
-      });
-      
-      // Sort dates
-      const labels = Object.keys(registrationCounts).sort();
-      const data = labels.map(label => registrationCounts[label]);
-      return { labels, data };
-    }
-    
-    // Render registration trend as a bar chart using Chart.js
-    function renderChart(chartData) {
-      const ctx = document.getElementById('registrationChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',  // Bar chart type
-        data: {
-          labels: chartData.labels,
-          datasets: [{
-            label: 'Patient Registrations',
-            data: chartData.data,
-            backgroundColor: 'rgba(76, 175, 80, 0.6)',
-            borderColor: 'rgba(76, 175, 80, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'Date'
-              }
-            },
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Registrations'
-              }
-            }
-          }
-        }
-      });
-    }
-    
-    // "Add User" functionality
-    document.getElementById('addUserBtn').addEventListener('click', function() {
+    // Add user using Parse.User.signUp
+    document.getElementById('addUserBtn').addEventListener('click', async function() {
       const username = prompt("Enter new user's username:");
       if (!username) return;
       const password = prompt("Enter new user's password:");
       if (!password) return;
-      let users = localStorage.getItem('users');
-      users = users ? JSON.parse(users) : [];
-      if (users.find(u => u.username === username)) {
-        alert("User already exists!");
-        return;
+      
+      try {
+        const user = new Parse.User();
+        user.set("username", username);
+        user.set("password", password);
+        // Optionally, set additional fields (e.g., email) here.
+        const result = await user.signUp();
+        alert("User added successfully! Object ID: " + result.id);
+        loadUsers();
+      } catch (error) {
+        console.error("Error adding user:", error);
+        alert("Error adding user: " + error.message);
       }
-      users.push({ username, password });
-      localStorage.setItem('users', JSON.stringify(users));
-      loadUsers();
     });
     
-    // Initialize dashboard components
+    // Load users from Parse
+    async function loadUsers() {
+      try {
+        const query = new Parse.Query(Parse.User);
+        const results = await query.find();
+        const usersTableBody = document.getElementById('usersTableBody');
+        usersTableBody.innerHTML = "";
+        results.forEach((user) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${user.get("username") || ""}</td>`;
+          usersTableBody.appendChild(row);
+        });
+        document.getElementById('totalUsersCard').textContent = 'Total Users: ' + results.length;
+      } catch (error) {
+        console.error("Error loading users:", error);
+      }
+    }
+    
+    // Load patients count from Parse
+    async function loadPatientsCount() {
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        const results = await query.find();
+        document.getElementById('totalPatientsCard').textContent = 'Total Patients: ' + results.length;
+      } catch (error) {
+        console.error("Error loading patients:", error);
+      }
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
       loadUsers();
-      const chartData = loadPatientData();
-      renderChart(chartData);
+      loadPatientsCount();
     });
   </script>
 </body>
