@@ -5,8 +5,14 @@
   <title>Admin Dashboard - Manage Users & Patient Trends</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <!-- Include Parse SDK -->
+  <!-- Include Parse SDK and Chart.js -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Initialize Parse with your Back4App credentials
+    Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
+    Parse.serverURL = 'https://parseapi.back4app.com/';
+  </script>
   <style>
     :root {
       --primary-color: #4CAF50;
@@ -107,7 +113,7 @@
     tr:nth-child(even) {
       background: #f9f9f9;
     }
-    /* Action buttons */
+    /* Action buttons for table rows */
     .action-buttons button {
       padding: 6px 10px;
       font-size: 0.9rem;
@@ -133,6 +139,26 @@
       transform: scale(1.05);
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+    /* Charts / Trends Section - For this version, we add a table for specialty trend */
+    .charts-container {
+      margin-bottom: var(--spacing);
+    }
+    /* Trend Table styling */
+    #trendTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: var(--spacing);
+    }
+    #trendTable th, #trendTable td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: var(--font-size);
+    }
+    #trendTable th {
+      background: var(--primary-color);
+      color: #fff;
+    }
     /* Navigation Buttons */
     .nav-buttons {
       display: flex;
@@ -155,7 +181,7 @@
       transform: scale(1.05);
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    /* Responsive */
+    /* Responsive styling */
     @media (max-width: 600px) {
       .header h1 {
         font-size: 1.6rem;
@@ -229,8 +255,8 @@
       </table>
     </div>
     
-    <!-- Patient Trends Section: Table for Specialty -->
-    <div class="section" id="trendSection">
+    <!-- Patient Trends Section -->
+    <div class="section" id="trendsSection">
       <h2>Patient Trend by Specialty</h2>
       <table id="trendTable">
         <thead>
@@ -243,6 +269,12 @@
           <!-- Trend data will be loaded here -->
         </tbody>
       </table>
+      
+      <h2>Patient Ages Distribution</h2>
+      <!-- For ages, we'll use a bar chart -->
+      <div style="position: relative; height:300px;">
+        <canvas id="ageChart"></canvas>
+      </div>
     </div>
     
     <!-- Navigation Buttons -->
@@ -264,7 +296,7 @@
       });
     }
     
-    // Ensure only admin (username "mhh") can access this page
+    // Check admin access (only user "mhh" can view this page)
     function checkAdmin() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       if (loggedUser !== "mhh") {
@@ -273,23 +305,20 @@
       }
     }
     
-    // Load users from Parse _User table
+    // Load users from _User table
     async function loadUsers() {
       try {
         const query = new Parse.Query(Parse.User);
-        query.limit(1000);
+        query.limit(1000); // Retrieve all users
         const users = await query.find();
-        
-        // Compute patient counts per user
         const patientCounts = await getUserPatientCounts();
-        
         const usersTableBody = document.getElementById('usersTableBody');
         usersTableBody.innerHTML = "";
         users.forEach((user) => {
           const name = user.get("name") || "N/A";
           const specialty = user.get("specialty") || "N/A";
           const username = user.get("username") || "";
-          const password = user.get("userPassword") || "N/A"; // For demo purposes only
+          const password = user.get("userPassword") || "N/A"; // For demo only
           const userId = user.id;
           const numPatients = patientCounts[userId] || 0;
           const row = document.createElement('tr');
@@ -311,7 +340,7 @@
       }
     }
     
-    // Compute the number of patients per user from Patient class
+    // Compute number of patients per user from the Patient class
     async function getUserPatientCounts() {
       const counts = {};
       try {
@@ -332,7 +361,7 @@
       return counts;
     }
     
-    // Add User function using Parse.User.signUp (for demo, plaintext stored in custom field "userPassword")
+    // Add User using Parse.User.signUp (for demo only)
     document.getElementById('addUserBtn').addEventListener('click', async function() {
       const username = prompt("Enter new user's username:");
       if (!username) return;
@@ -349,7 +378,7 @@
         newUser.set("username", username);
         newUser.set("password", password);
         newUser.set("specialty", specialty);
-        // For demonstration only (not secure for production):
+        // For demo: store plaintext password (not recommended for production)
         newUser.set("userPassword", password);
         const result = await newUser.signUp();
         alert("User added successfully! User ID: " + result.id);
@@ -415,7 +444,7 @@
       window.location.href = "editPatient.html?patientId=" + patientId;
     }
     
-    // Load patient trends: create a table showing number of patients for each specialty
+    // Load patient trends: create a table showing number of patients per specialty
     async function loadSpecialtyTrends() {
       try {
         const Patient = Parse.Object.extend("Patient");
@@ -443,6 +472,22 @@
         console.error("Error loading specialty trends:", error);
       }
     }
+    
+    // Helper: Calculate age from a dob string ("YYYY-MM-DD")
+    function calculateAge(dobString) {
+      const dob = new Date(dobString);
+      const diffMs = Date.now() - dob.getTime();
+      const ageDt = new Date(diffMs);
+      return Math.abs(ageDt.getUTCFullYear() - 1970);
+    }
+    
+    // Group age into decades
+    function groupAge(age) {
+      return Math.floor(age / 10) * 10;
+    }
+    
+    // (Optional) You can add an age trend chart if needed.
+    // For now, we only have the specialty trends table.
     
     // Initialization on page load
     document.addEventListener('DOMContentLoaded', () => {
