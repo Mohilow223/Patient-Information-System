@@ -9,12 +9,12 @@
     :root {
       --primary-color: #4CAF50;  
       --primary-dark: #388E3C;
-      --secondary-color: #FF9800; /* Orange for "Go to Patient Table" button */
+      --secondary-color: #007BFF;
       --bg-color: #f9f9f9;
       --section-bg: #ffffff;
-      --header-box-bg: #3f51b5; /* New header background color */
-      --header-box-text: #fff;
+      --heading-bg: #4CAF50;
       --section-heading-bg: #e0f2f1;
+      --heading-text-color: #fff;
       --section-heading-text-color: #333;
       --border-radius: 8px;
       --font-size: 1.1rem;
@@ -36,8 +36,9 @@
       padding: var(--spacing);
       border-radius: var(--border-radius);
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      position: relative;
     }
-    /* Header (user details) placed in normal flow at top-right inside a header bar */
+    /* Header with user details */
     .header {
       display: flex;
       justify-content: flex-end;
@@ -59,21 +60,22 @@
       cursor: pointer;
     }
     .header button:hover {
-      background: #e68900;
+      background: #006ae0;
     }
-    /* Main Heading in a distinct colored box */
+    /* Main Heading in a colored box */
     h1 {
       font-size: var(--heading-font-size);
       text-align: center;
       margin-bottom: var(--spacing);
-      background: var(--header-box-bg);
-      color: var(--header-box-text);
+      background: var(--heading-bg);
+      color: var(--heading-text-color);
       padding: 12px;
       border: 2px solid var(--primary-color);
       border-radius: var(--border-radius);
     }
     form {
       margin: 0;
+      padding-top: 80px; /* space for header if needed */
     }
     /* Flex container for sections */
     .sections-container {
@@ -123,8 +125,12 @@
     input[type="file"] {
       margin-top: 10px;
     }
-    button {
+    .submit-container,
+    .button-container {
+      text-align: center;
       margin-top: var(--spacing);
+    }
+    button {
       padding: 12px 24px;
       font-size: var(--font-size);
       background: var(--primary-color);
@@ -132,21 +138,10 @@
       border-radius: var(--border-radius);
       color: #fff;
       cursor: pointer;
+      transition: background 0.3s;
     }
     button:hover {
       background: var(--primary-dark);
-    }
-    .submit-container,
-    .button-container {
-      text-align: center;
-      margin-top: var(--spacing);
-    }
-    /* "Go to Patient Table" button uses secondary color */
-    .button-container button {
-      background: var(--secondary-color);
-    }
-    .button-container button:hover {
-      background: #e68900;
     }
     /* Dynamic entries styling */
     .dynamic-entry {
@@ -179,6 +174,12 @@
   </style>
 </head>
 <body>
+  <script>
+    // Login Check: Redirect to login page if not logged in
+    if (localStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
   <div class="container">
     <!-- Header with logged-in username and logout button -->
     <div class="header">
@@ -240,13 +241,10 @@
         <button type="submit">Submit Patient Information</button>
       </div>
     </form>
-    <div class="button-container">
-      <button onclick="window.open('patientTable.html', '_blank')">Go to Patient Table</button>
-    </div>
   </div>
   
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header: display logged-in username and add logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -456,58 +454,14 @@
     document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
     
     // Handle form submission: gather all dynamic data and save to localStorage
-    document.getElementById('patientForm').addEventListener('submit', async function(event) {
+    document.getElementById('editPatientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
-      const patientID = generatePatientID();
-      const patientName = document.getElementById('patientName').value;
-      const dob = document.getElementById('dob').value;
-      const location = document.getElementById('location').value;
-      const phone = document.getElementById('phone').value;
+      const index = getQueryParam('index');
+      const storedPatients = localStorage.getItem('patients');
+      let patients = storedPatients ? JSON.parse(storedPatients) : [];
       
-      // Gather dynamic entries for Medical History
-      const diseaseEntries = document.getElementById('diseasesContainer').getElementsByClassName('dynamic-entry');
-      let diseasesArray = [];
-      for (let entry of diseaseEntries) {
-        const inputs = entry.querySelectorAll('input[type="text"]');
-        if (inputs.length >= 2) {
-          const diseaseName = inputs[0].value;
-          const diseaseMeds = inputs[1].value;
-          if (diseaseName && diseaseMeds) {
-            diseasesArray.push({ disease: diseaseName, diseaseMedications: diseaseMeds });
-          }
-        }
-      }
-      
-      const surgeryEntries = document.getElementById('surgeriesContainer').getElementsByClassName('dynamic-entry');
-      let surgeriesArray = [];
-      for (let entry of surgeryEntries) {
-        const inputs = entry.querySelectorAll('input');
-        if (inputs.length >= 3) {
-          const surgeryDate = inputs[0].value;
-          const surgeryType = inputs[1].value;
-          const surgeryIndication = inputs[2].value;
-          if (surgeryDate && surgeryType && surgeryIndication) {
-            surgeriesArray.push({ date: surgeryDate, type: surgeryType, indication: surgeryIndication });
-          }
-        }
-      }
-      
-      const medicationEntries = document.getElementById('medicationsContainer').getElementsByClassName('dynamic-entry');
-      let medicationsArray = [];
-      for (let entry of medicationEntries) {
-        const inputs = entry.querySelectorAll('input');
-        if (inputs.length >= 3) {
-          const medName = inputs[0].value;
-          const dosage = inputs[1].value;
-          const frequency = inputs[2].value;
-          if (medName && dosage && frequency) {
-            medicationsArray.push({ name: medName, dosage: dosage, frequency: frequency });
-          }
-        }
-      }
-      
-      const visitsContainer = document.getElementById('visitsContainer');
-      const visitEntries = visitsContainer.getElementsByClassName('visit-entry');
+      // Gather visits entries
+      const visitEntries = document.getElementsByClassName('visit-entry');
       let visitsArray = [];
       for (let entry of visitEntries) {
         const dateVal = entry.querySelector('input[type="date"]').value;
@@ -517,40 +471,155 @@
         }
       }
       
-      const investigationsInput = document.getElementById('investigations');
-      const files = investigationsInput.files;
-      let investigations = [];
-      if (files.length > 0) {
-        investigations = await readFilesAsDataURL(files);
-      }
-      
-      const newPatient = {
-        patientID,
-        patientName,
-        dob,
-        location,
-        phone,
-        pastMedicalHistory: diseasesArray,
-        pastSurgicalHistory: surgeriesArray,
-        medications: medicationsArray,
+      // Build updated patient object
+      const updatedPatient = {
+        patientID: document.getElementById('patientID').value,
+        patientName: document.getElementById('patientName').value,
+        dob: document.getElementById('dob').value,
+        location: document.getElementById('location').value,
+        phone: document.getElementById('phone').value,
+        pastMedicalHistory: [],
+        pastSurgicalHistory: [],
+        medications: [],
         visits: visitsArray,
-        investigations,
-        registrationDate: new Date().toISOString()
+        investigations: patients[index].investigations // default: keep existing
       };
       
-      let patients = localStorage.getItem('patients');
-      patients = patients ? JSON.parse(patients) : [];
-      patients.push(newPatient);
+      // Gather disease entries
+      const diseaseEntries = document.getElementById('diseasesContainer').getElementsByClassName('dynamic-entry');
+      for (let entry of diseaseEntries) {
+        const inputs = entry.querySelectorAll('input[type="text"]');
+        if (inputs.length >= 2) {
+          const diseaseName = inputs[0].value;
+          const diseaseMeds = inputs[1].value;
+          if (diseaseName && diseaseMeds) {
+            updatedPatient.pastMedicalHistory.push({ disease: diseaseName, diseaseMedications: diseaseMeds });
+          }
+        }
+      }
+      
+      // Gather surgery entries
+      const surgeryEntries = document.getElementById('surgeriesContainer').getElementsByClassName('dynamic-entry');
+      for (let entry of surgeryEntries) {
+        const inputs = entry.querySelectorAll('input');
+        if (inputs.length >= 3) {
+          const surgeryDate = inputs[0].value;
+          const surgeryType = inputs[1].value;
+          const surgeryIndication = inputs[2].value;
+          if (surgeryDate && surgeryType && surgeryIndication) {
+            updatedPatient.pastSurgicalHistory.push({ date: surgeryDate, type: surgeryType, indication: surgeryIndication });
+          }
+        }
+      }
+      
+      // Gather medication entries
+      const medicationEntries = document.getElementById('medicationsContainer').getElementsByClassName('dynamic-entry');
+      for (let entry of medicationEntries) {
+        const inputs = entry.querySelectorAll('input');
+        if (inputs.length >= 3) {
+          const medName = inputs[0].value;
+          const dosage = inputs[1].value;
+          const frequency = inputs[2].value;
+          if (medName && dosage && frequency) {
+            updatedPatient.medications.push({ name: medName, dosage: dosage, frequency: frequency });
+          }
+        }
+      }
+      
+      // Handle investigations update if new files are attached
+      const investigationsInput = document.getElementById('investigations');
+      const files = investigationsInput.files;
+      if (files.length > 0) {
+        updatedPatient.investigations = await readFilesAsDataURL(files);
+      }
+      
+      patients[index] = updatedPatient;
       localStorage.setItem('patients', JSON.stringify(patients));
+      alert("Patient details updated successfully.");
+      window.location.href = 'patientTable.html';
+    });
+    
+    // Load patient details from localStorage and populate form fields
+    function loadPatientDetails() {
+      const index = getQueryParam('index');
+      if (index === null) {
+        alert("No patient selected for editing.");
+        window.location.href = 'patientTable.html';
+        return;
+      }
+      const storedPatients = localStorage.getItem('patients');
+      const patients = storedPatients ? JSON.parse(storedPatients) : [];
+      if (index < 0 || index >= patients.length) {
+        alert("Invalid patient index.");
+        window.location.href = 'patientTable.html';
+        return;
+      }
+      const patient = patients[index];
+      document.getElementById('patientID').value = patient.patientID;
+      document.getElementById('patientName').value = patient.patientName;
+      document.getElementById('dob').value = patient.dob;
+      document.getElementById('location').value = patient.location;
+      document.getElementById('phone').value = patient.phone;
       
-      // Reset form and dynamic containers
-      document.getElementById('patientForm').reset();
-      document.getElementById('diseasesContainer').innerHTML = '';
-      document.getElementById('surgeriesContainer').innerHTML = '';
-      document.getElementById('medicationsContainer').innerHTML = '';
-      document.getElementById('visitsContainer').innerHTML = '';
+      // Load dynamic Medical History entries
+      const diseasesContainer = document.getElementById('diseasesContainer');
+      diseasesContainer.innerHTML = '';
+      if (patient.pastMedicalHistory && patient.pastMedicalHistory.length > 0) {
+        patient.pastMedicalHistory.forEach(d => addDiseaseEntry(d));
+      }
       
-      alert('Patient information submitted successfully.');
+      const surgeriesContainer = document.getElementById('surgeriesContainer');
+      surgeriesContainer.innerHTML = '';
+      if (patient.pastSurgicalHistory && patient.pastSurgicalHistory.length > 0) {
+        patient.pastSurgicalHistory.forEach(s => addSurgeryEntry(s));
+      }
+      
+      const medicationsContainer = document.getElementById('medicationsContainer');
+      medicationsContainer.innerHTML = '';
+      if (patient.medications && patient.medications.length > 0) {
+        patient.medications.forEach(m => addMedicationEntry(m));
+      }
+      
+      // Load visits entries
+      const visitsContainer = document.getElementById('visitsContainer');
+      visitsContainer.innerHTML = '';
+      if (patient.visits && patient.visits.length > 0) {
+        patient.visits.forEach(v => addVisitEntry(v));
+      }
+      
+      // Display current investigations
+      displayInvestigations(patient.investigations);
+    }
+    
+    // Helper function to display investigation thumbnails
+    function displayInvestigations(investigations) {
+      const container = document.getElementById('investigationsContainer');
+      container.innerHTML = '';
+      if (investigations && investigations.length > 0) {
+        investigations.forEach((imgData, idx) => {
+          const img = document.createElement('img');
+          img.src = imgData;
+          img.alt = 'Investigation ' + (idx + 1);
+          img.title = 'Click to view full image';
+          img.addEventListener('click', () => {
+            window.open(imgData, '_blank');
+          });
+          container.appendChild(img);
+        });
+      } else {
+        container.innerHTML = '<p>No investigation images attached.</p>';
+      }
+    }
+    
+    // Helper: get query parameter from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      setupHeader();
+      loadPatientDetails();
     });
   </script>
 </body>
