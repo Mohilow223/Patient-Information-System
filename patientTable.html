@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Patient Data Table</title>
+  <!-- Import Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --primary-dark: #388E3C;
+      --secondary-color: #007BFF;
+      --dataEntry-btn-bg: #FF5722; /* Orange for Data Entry button */
+      --dataEntry-btn-hover: #E64A19;
+      --bg-color: #f9f9f9;
+      --card-bg: #ffffff;
+      --border-radius: 8px;
+      --font-size: 1.1rem;
+      --heading-font-size: 2rem;
+      --spacing: 20px;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      padding: var(--spacing);
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: var(--spacing);
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    /* Header with user details */
+    .header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: var(--spacing);
+    }
+    .header span {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-right: 10px;
+    }
+    .header button {
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      background: var(--secondary-color);
+      border: none;
+      border-radius: var(--border-radius);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .header button:hover {
+      background: #006ae0;
+    }
+    h1 {
+      font-size: var(--heading-font-size);
+      text-align: center;
+      margin-bottom: var(--spacing);
+      background: var(--primary-color);
+      color: #fff;
+      padding: 10px;
+      border-radius: var(--border-radius);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: var(--spacing);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      font-size: var(--font-size);
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      background: var(--primary-color);
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    tr:hover {
+      background: #f1f1f1;
+    }
+    /* Action buttons styling */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    .action-buttons button {
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background 0.3s;
+      min-width: 70px;
+    }
+    .show-btn {
+      background-color: #2196F3;
+      color: #fff;
+    }
+    .show-btn:hover {
+      background-color: #1976D2;
+    }
+    .delete-btn {
+      background-color: #F44336;
+      color: #fff;
+    }
+    .delete-btn:hover {
+      background-color: #D32F2F;
+    }
+    /* Navigation button at the bottom */
+    .button-container {
+      text-align: center;
+      margin-top: var(--spacing);
+    }
+    .button-container button {
+      background: var(--dataEntry-btn-bg);
+      color: #fff;
+      padding: 14px 28px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .button-container button:hover {
+      background: var(--dataEntry-btn-hover);
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // Check if user is logged in; if not, redirect to login page.
+    if (localStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+  <div class="container">
+    <!-- Header with logged-in username and logout button -->
+    <div class="header">
+      <span id="welcomeUser">Welcome, Unknown</span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+    <h1>Patient Data Table</h1>
+    <table id="patientTable">
+      <thead>
+        <tr>
+          <th>Patient ID</th>
+          <th>Name</th>
+          <th>DOB</th>
+          <th>Location</th>
+          <th>Phone</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="patientTableBody">
+        <!-- Patient rows will be inserted here -->
+      </tbody>
+    </table>
+    <div class="button-container">
+      <button onclick="window.open('index.html', '_blank')">Go to Data Entry</button>
+    </div>
+  </div>
+  
+  <script>
+    // Setup header: display logged-in username and logout functionality
+    function setupHeader() {
+      const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
+      document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('loggedIn');
+        localStorage.removeItem('loggedUser');
+        window.location.href = 'login.html';
+      });
+    }
+    
+    // Load patients from localStorage and render table rows
+    function loadPatients() {
+      let patients = localStorage.getItem('patients');
+      patients = patients ? JSON.parse(patients) : [];
+      const tbody = document.getElementById('patientTableBody');
+      tbody.innerHTML = '';
+      patients.forEach((patient, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${patient.patientID}</td>
+          <td>${patient.patientName}</td>
+          <td>${patient.dob}</td>
+          <td>${patient.location}</td>
+          <td>${patient.phone}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="show-btn" onclick="editPatient(${index})">Show</button>
+              <button class="delete-btn" onclick="deletePatient(${index})">Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Functions for Show (edit) and Delete actions
+    function editPatient(index) {
+      window.location.href = 'editPatient.html?index=' + index;
+    }
+    function deletePatient(index) {
+      if (confirm("Are you sure you want to delete this patient?")) {
+        let patients = localStorage.getItem('patients');
+        patients = patients ? JSON.parse(patients) : [];
+        patients.splice(index, 1);
+        localStorage.setItem('patients', JSON.stringify(patients));
+        loadPatients();
+      }
+    }
+    
+    // Initialize header and load patients on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      setupHeader();
+      loadPatients();
+    });
+  </script>
+</body>
+</html>
