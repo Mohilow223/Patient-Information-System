@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard - Manage Users & Patient Trends</title>
-  <!-- Google Font & Parse/Chart.js -->
+  <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Include Parse SDK and Chart.js -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -56,7 +57,7 @@
       margin: 0;
       color: var(--primary-color);
     }
-    .header .user-info {
+    .user-info {
       font-size: 1rem;
       display: flex;
       align-items: center;
@@ -130,7 +131,15 @@
       transform: scale(1.05);
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    /* Charts container */
+    .delete-btn {
+      background: linear-gradient(45deg, #F44336, #D32F2F);
+      color: #fff;
+    }
+    .delete-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    /* Charts */
     .charts-container {
       display: flex;
       flex-wrap: wrap;
@@ -174,7 +183,7 @@
       transform: scale(1.05);
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    /* Responsive media query */
+    /* Responsive */
     @media (max-width: 600px) {
       .header h1 {
         font-size: 1.6rem;
@@ -182,9 +191,6 @@
       th, td {
         font-size: 0.9rem;
         padding: 8px;
-      }
-      .action-buttons button {
-        font-size: 0.8rem;
       }
       .nav-buttons button {
         font-size: 1rem;
@@ -195,7 +201,7 @@
 </head>
 <body>
   <script>
-    // Redirect if not logged in
+    // Redirect to login if not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -228,18 +234,39 @@
           <!-- User rows will be loaded here -->
         </tbody>
       </table>
+      <button id="addUserBtn">Add User</button>
     </div>
     
-    <!-- Trends Section -->
-    <div class="section">
+    <!-- Patients Section -->
+    <div class="section" id="patientsSection">
+      <h2>All Registered Patients</h2>
+      <table id="patientsTable">
+        <thead>
+          <tr>
+            <th>Patient ID</th>
+            <th>Name</th>
+            <th>DOB</th>
+            <th>Location</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="patientsTableBody">
+          <!-- Patient rows will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Patient Trends by User Specialty and Ages -->
+    <div class="section" id="trendsSection">
       <h2>Patient Trends</h2>
       <div class="charts-container">
-        <!-- Chart 1: Specialty of User -> # of Patients -->
+        <!-- Chart 1: Patient count by Specialty -->
         <div class="chart-box">
-          <h3>Patients by User Specialty</h3>
+          <h3>Patients by Specialty</h3>
           <canvas id="specialtyChart"></canvas>
         </div>
-        <!-- Chart 2: Ages of Patients (Distribution) -->
+        <!-- Chart 2: Patient Ages Distribution -->
         <div class="chart-box">
           <h3>Patient Ages Distribution</h3>
           <canvas id="ageChart"></canvas>
@@ -255,7 +282,7 @@
   </div>
   
   <script>
-    // Setup header & logout
+    // Setup header: show logged-in username and set up logout
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -266,7 +293,7 @@
       });
     }
     
-    // Ensure only admin "mhh" can access
+    // Check if user is admin ("mhh")
     function checkAdmin() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       if (loggedUser !== "mhh") {
@@ -275,14 +302,15 @@
       }
     }
     
-    // Load users from Parse & compute # of patients for each
+    // Load users from Parse and compute # of patients per user
     async function loadUsers() {
       try {
-        const userQuery = new Parse.Query(Parse.User);
-        const users = await userQuery.find();
+        const query = new Parse.Query(Parse.User);
+        query.limit(1000); // Increase limit if needed
+        const users = await query.find();
         
-        // Prepare a map from userId -> # of patients
-        const userPatientCounts = await getUserPatientCounts();
+        // Compute number of patients per user
+        const patientCounts = await getUserPatientCounts();
         
         const usersTableBody = document.getElementById('usersTableBody');
         usersTableBody.innerHTML = "";
@@ -291,10 +319,9 @@
           const name = user.get("name") || "N/A";
           const specialty = user.get("specialty") || "N/A";
           const username = user.get("username") || "";
-          const password = user.get("userPassword") || "N/A"; // For demonstration only
+          const password = user.get("userPassword") || "N/A"; // For demo purposes only
           const userId = user.id;
-          
-          const patientCount = userPatientCounts[userId] || 0;
+          const numPatients = patientCounts[userId] || 0;
           
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -302,9 +329,10 @@
             <td>${specialty}</td>
             <td>${username}</td>
             <td>${password}</td>
-            <td>${patientCount}</td>
+            <td>${numPatients}</td>
             <td class="action-buttons">
               <button class="edit-btn" onclick="editUser('${userId}')">Edit</button>
+              <button class="delete-btn" onclick="deleteUser('${userId}')">Delete</button>
             </td>
           `;
           usersTableBody.appendChild(row);
@@ -314,16 +342,15 @@
       }
     }
     
-    // Compute the number of patients for each user
+    // Compute patient counts per user
     async function getUserPatientCounts() {
       const counts = {};
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
         query.include("createdBy");
-        const allPatients = await query.find();
-        
-        allPatients.forEach((patient) => {
+        const patients = await query.find();
+        patients.forEach((patient) => {
           const creator = patient.get("createdBy");
           if (creator) {
             const userId = creator.id;
@@ -331,34 +358,78 @@
           }
         });
       } catch (error) {
-        console.error("Error computing user patient counts:", error);
+        console.error("Error computing patient counts:", error);
       }
       return counts;
     }
     
-    // Edit user function
+    // Edit user: redirect to editUser.html with userId as query parameter
     function editUser(userId) {
-      // You can create an editUser.html to handle editing user details
-      alert("Edit user with ID: " + userId);
-      // window.location.href = "editUser.html?userId=" + userId;
+      window.location.href = "editUser.html?userId=" + userId;
     }
     
-    // Chart 1: Specialty of User -> # of Patients
-    async function loadSpecialtyChart() {
+    // Delete user from Parse
+    async function deleteUser(userId) {
+      if (confirm("Are you sure you want to delete this user?")) {
+        try {
+          const query = new Parse.Query(Parse.User);
+          const user = await query.get(userId);
+          if (user) {
+            await user.destroy();
+            alert("User deleted successfully.");
+            loadUsers();
+          }
+        } catch (error) {
+          console.error("Error deleting user:", error);
+          alert("Error deleting user: " + error.message);
+        }
+      }
+    }
+    
+    // Load all patients (admin sees all)
+    async function loadPatients() {
       try {
-        const userQuery = new Parse.Query(Parse.User);
-        const users = await userQuery.find();
-        
-        // We'll compute how many patients exist for each user specialty
-        // 1) get all patients
         const Patient = Parse.Object.extend("Patient");
-        const pQuery = new Parse.Query(Patient);
-        pQuery.include("createdBy");
-        const allPatients = await pQuery.find();
+        const query = new Parse.Query(Patient);
+        const patients = await query.find();
+        const patientsTableBody = document.getElementById('patientsTableBody');
+        patientsTableBody.innerHTML = "";
+        patients.forEach((patient) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${patient.id}</td>
+            <td>${patient.get("patientName") || ""}</td>
+            <td>${patient.get("dob") || ""}</td>
+            <td>${patient.get("location") || ""}</td>
+            <td>${patient.get("phone") || ""}</td>
+            <td>
+              <button class="edit-btn" onclick="editPatient('${patient.id}')">Edit</button>
+            </td>
+          `;
+          patientsTableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("Error loading patients:", error);
+      }
+    }
+    
+    // Edit patient: redirect to editPatient.html with patientId as query parameter
+    function editPatient(patientId) {
+      window.location.href = "editPatient.html?patientId=" + patientId;
+    }
+    
+    // Load patient trends: create a bar chart of number of patients per specialty and age distribution
+    async function loadPatientTrends() {
+      try {
+        // Trend 1: Patients by Specialty (group by the specialty of the user who created the patient)
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        query.include("createdBy");
+        const patients = await query.find();
         
-        // 2) For each patient, increment the specialty count of the user who created it
+        // For specialty trend: group patients by the specialty field of createdBy user
         const specialtyCounts = {};
-        allPatients.forEach((patient) => {
+        patients.forEach((patient) => {
           const creator = patient.get("createdBy");
           if (creator) {
             const specialty = creator.get("specialty") || "N/A";
@@ -366,33 +437,14 @@
           }
         });
         
+        // Prepare data for specialty chart
         const specialties = Object.keys(specialtyCounts);
-        const data = specialties.map(spec => specialtyCounts[spec]);
+        const specialtyData = specialties.map(spec => specialtyCounts[spec]);
+        renderBarChart("specialtyChart", specialties, specialtyData, "Patients");
         
-        renderBarChart("specialtyChart", specialties, data, "Patients");
-      } catch (error) {
-        console.error("Error loading specialty chart:", error);
-      }
-    }
-    
-    // Chart 2: Ages of Patients distribution
-    function calculateAge(dobString) {
-      const dob = new Date(dobString);
-      const diffMs = Date.now() - dob.getTime();
-      const ageDt = new Date(diffMs);
-      return Math.abs(ageDt.getUTCFullYear() - 1970);
-    }
-    function groupAge(age) {
-      return Math.floor(age / 10) * 10;
-    }
-    async function loadAgeChart() {
-      try {
-        const Patient = Parse.Object.extend("Patient");
-        const query = new Parse.Query(Patient);
-        const results = await query.find();
-        
+        // Trend 2: Patient Ages Distribution
         const ageCounts = {};
-        results.forEach((patient) => {
+        patients.forEach((patient) => {
           const dob = patient.get("dob");
           if (dob) {
             const age = calculateAge(dob);
@@ -400,18 +452,16 @@
             ageCounts[ageGroup] = (ageCounts[ageGroup] || 0) + 1;
           }
         });
-        
         const ageGroups = Object.keys(ageCounts).map(Number).sort((a, b) => a - b);
         const ageLabels = ageGroups.map(g => `${g}-${g+9}`);
         const ageData = ageGroups.map(g => ageCounts[g]);
-        
         renderBarChart("ageChart", ageLabels, ageData, "Patients");
       } catch (error) {
-        console.error("Error loading age chart:", error);
+        console.error("Error loading patient trends:", error);
       }
     }
     
-    // Render a bar chart using Chart.js
+    // Render bar chart using Chart.js
     function renderBarChart(canvasId, labels, data, datasetLabel) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       new Chart(ctx, {
@@ -446,13 +496,13 @@
       });
     }
     
-    // Page Initialization
+    // Initialization on page load
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
       checkAdmin();
       loadUsers();
-      loadSpecialtyChart();
-      loadAgeChart();
+      loadPatients();
+      loadPatientTrends();
     });
   </script>
 </body>
