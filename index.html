@@ -187,8 +187,8 @@
   </style>
 </head>
 <body>
+  <!-- Redirect if not logged in -->
   <script>
-    // Redirect to login if user is not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -270,12 +270,7 @@
     
     document.addEventListener('DOMContentLoaded', setupHeader);
     
-    // Generate a unique patient ID using current time and random value (optional)
-    function generatePatientID() {
-      return 'PID' + Date.now() + Math.floor(Math.random() * 1000);
-    }
-    
-    // Read multiple files as Data URLs (for investigations)
+    // Helper: Read multiple files as Data URLs (for investigations)
     function readFilesAsDataURL(files) {
       const promises = [];
       for (let i = 0; i < files.length; i++) {
@@ -466,25 +461,26 @@
     document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
     
     // Handle form submission: check for duplicate patient by name (case-insensitive)
-    // before saving online using Parse
+    // within the current user's records before saving online using Parse.
     document.getElementById('patientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       
       const patientName = document.getElementById('patientName').value.trim();
       
       // Query for an existing patient with the same name (case-insensitive)
+      // AND created by the current user.
       const Patient = Parse.Object.extend("Patient");
       const query = new Parse.Query(Patient);
       query.matches("patientName", "^" + patientName + "$", "i");
+      query.equalTo("createdBy", Parse.User.current());
       
       try {
         const duplicate = await query.first();
         if (duplicate) {
-          if (confirm("A patient with this name already exists. Do you want to edit the existing record?")) {
+          if (confirm("A patient with this name already exists under your account. Do you want to edit the existing record?")) {
             window.location.href = "editPatient.html?patientId=" + duplicate.id;
             return;
           } else {
-            // If not editing, cancel the save
             return;
           }
         }
@@ -558,7 +554,7 @@
           investigationsArray = await readFilesAsDataURL(files);
         }
         
-        // Create a new Parse object for the "Patient" class
+        // Create a new Parse Patient object and set fields
         const newPatient = new Patient();
         newPatient.set("patientName", patientName);
         newPatient.set("dob", dob);
@@ -570,7 +566,7 @@
         newPatient.set("visits", visitsArray);
         newPatient.set("investigations", investigationsArray);
         newPatient.set("registrationDate", new Date().toISOString());
-        // Associate patient with the current user
+        // Associate this patient with the current user
         newPatient.set("createdBy", Parse.User.current());
         
         const savedPatient = await newPatient.save();
@@ -582,7 +578,7 @@
       }
     });
     
-    // Helper function to get query parameter from URL
+    // Helper function to get query parameter from URL (if needed for edit)
     function getQueryParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(param);
