@@ -5,6 +5,13 @@
   <title>Edit Patient Details</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Include Parse SDK -->
+  <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script>
+    // Initialize Parse with your Back4App credentials
+    Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
+    Parse.serverURL = 'https://parseapi.back4app.com/';
+  </script>
   <style>
     :root {
       --primary-color: #4CAF50;
@@ -58,11 +65,12 @@
       border-radius: var(--border-radius);
       color: #fff;
       cursor: pointer;
+      transition: background 0.3s;
     }
     .header button:hover {
       background: #006ae0;
     }
-    /* Main Heading in a colored box */
+    /* Main Heading */
     h1 {
       font-size: var(--heading-font-size);
       text-align: center;
@@ -203,7 +211,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header with logged-in username and logout button -->
+    <!-- Header with logged-in user details -->
     <div class="header">
       <span id="welcomeUser">Welcome, Unknown</span>
       <button id="logoutBtn">Logout</button>
@@ -280,13 +288,67 @@
       });
     }
     
-    // Helper: get query parameter from URL
+    document.addEventListener('DOMContentLoaded', setupHeader);
+    
+    // Helper: get query parameter from URL (patientId)
     function getQueryParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(param);
     }
     
-    // Helper: read multiple files as Data URLs
+    // Initialize Parse Query and load patient details using patientId from URL
+    async function loadPatientDetails() {
+      const patientId = getQueryParam('patientId');
+      if (!patientId) {
+        alert("No patient selected for editing.");
+        window.location.href = 'patientTable.html';
+        return;
+      }
+      
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        const patient = await query.get(patientId);
+        
+        // Populate form fields with patient data from Parse
+        document.getElementById('patientID').value = patient.id;
+        document.getElementById('patientName').value = patient.get("patientName") || "";
+        document.getElementById('dob').value = patient.get("dob") || "";
+        document.getElementById('location').value = patient.get("location") || "";
+        document.getElementById('phone').value = patient.get("phone") || "";
+        
+        // Load dynamic Medical History entries
+        const diseases = patient.get("pastMedicalHistory") || [];
+        const surgeries = patient.get("pastSurgicalHistory") || [];
+        const medications = patient.get("medications") || [];
+        const visits = patient.get("visits") || [];
+        const investigations = patient.get("investigations") || [];
+        
+        const diseasesContainer = document.getElementById('diseasesContainer');
+        diseasesContainer.innerHTML = '';
+        diseases.forEach(d => addDiseaseEntry(d));
+        
+        const surgeriesContainer = document.getElementById('surgeriesContainer');
+        surgeriesContainer.innerHTML = '';
+        surgeries.forEach(s => addSurgeryEntry(s));
+        
+        const medicationsContainer = document.getElementById('medicationsContainer');
+        medicationsContainer.innerHTML = '';
+        medications.forEach(m => addMedicationEntry(m));
+        
+        const visitsContainer = document.getElementById('visitsContainer');
+        visitsContainer.innerHTML = '';
+        visits.forEach(v => addVisitEntry(v));
+        
+        displayInvestigations(investigations);
+      } catch (error) {
+        console.error("Error retrieving patient:", error);
+        alert("Error retrieving patient: " + error.message);
+        window.location.href = 'patientTable.html';
+      }
+    }
+    
+    // Read multiple files as Data URLs
     function readFilesAsDataURL(files) {
       const promises = [];
       for (let i = 0; i < files.length; i++) {
@@ -476,143 +538,102 @@
     }
     document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
     
-    // Handle form submission: gather all dynamic data and save to localStorage
+    // Handle form submission: gather all dynamic data and update the Parse object
     document.getElementById('editPatientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
-      const index = getQueryParam('index');
-      const storedPatients = localStorage.getItem('patients');
-      let patients = storedPatients ? JSON.parse(storedPatients) : [];
-      
-      // Gather visits entries
-      const visitEntries = document.getElementsByClassName('visit-entry');
-      let visitsArray = [];
-      for (let entry of visitEntries) {
-        const dateVal = entry.querySelector('input[type="date"]').value;
-        const complaintVal = entry.querySelector('input[type="text"]').value;
-        if (dateVal && complaintVal) {
-          visitsArray.push({ date: dateVal, chiefComplaint: complaintVal });
-        }
-      }
-      
-      // Build updated patient object
-      const updatedPatient = {
-        patientID: document.getElementById('patientID').value,
-        patientName: document.getElementById('patientName').value,
-        dob: document.getElementById('dob').value,
-        location: document.getElementById('location').value,
-        phone: document.getElementById('phone').value,
-        pastMedicalHistory: [],
-        pastSurgicalHistory: [],
-        medications: [],
-        visits: visitsArray,
-        investigations: patients[index].investigations // default: keep existing
-      };
-      
-      // Gather disease entries
-      const diseaseEntries = document.getElementById('diseasesContainer').getElementsByClassName('dynamic-entry');
-      for (let entry of diseaseEntries) {
-        const inputs = entry.querySelectorAll('input[type="text"]');
-        if (inputs.length >= 2) {
-          const diseaseName = inputs[0].value;
-          const diseaseMeds = inputs[1].value;
-          if (diseaseName && diseaseMeds) {
-            updatedPatient.pastMedicalHistory.push({ disease: diseaseName, diseaseMedications: diseaseMeds });
-          }
-        }
-      }
-      
-      // Gather surgery entries
-      const surgeryEntries = document.getElementById('surgeriesContainer').getElementsByClassName('dynamic-entry');
-      for (let entry of surgeryEntries) {
-        const inputs = entry.querySelectorAll('input');
-        if (inputs.length >= 3) {
-          const surgeryDate = inputs[0].value;
-          const surgeryType = inputs[1].value;
-          const surgeryIndication = inputs[2].value;
-          if (surgeryDate && surgeryType && surgeryIndication) {
-            updatedPatient.pastSurgicalHistory.push({ date: surgeryDate, type: surgeryType, indication: surgeryIndication });
-          }
-        }
-      }
-      
-      // Gather medication entries
-      const medicationEntries = document.getElementById('medicationsContainer').getElementsByClassName('dynamic-entry');
-      for (let entry of medicationEntries) {
-        const inputs = entry.querySelectorAll('input');
-        if (inputs.length >= 3) {
-          const medName = inputs[0].value;
-          const dosage = inputs[1].value;
-          const frequency = inputs[2].value;
-          if (medName && dosage && frequency) {
-            updatedPatient.medications.push({ name: medName, dosage: dosage, frequency: frequency });
-          }
-        }
-      }
-      
-      // Handle investigations update if new files are attached
-      const investigationsInput = document.getElementById('investigations');
-      const files = investigationsInput.files;
-      if (files.length > 0) {
-        updatedPatient.investigations = await readFilesAsDataURL(files);
-      }
-      
-      patients[index] = updatedPatient;
-      localStorage.setItem('patients', JSON.stringify(patients));
-      alert("Patient details updated successfully.");
-      window.location.href = 'patientTable.html';
-    });
-    
-    // Load patient details from localStorage and populate form fields
-    function loadPatientDetails() {
-      const index = getQueryParam('index');
-      if (index === null) {
+      const patientId = getQueryParam('patientId');
+      if (!patientId) {
         alert("No patient selected for editing.");
         window.location.href = 'patientTable.html';
         return;
       }
-      const storedPatients = localStorage.getItem('patients');
-      const patients = storedPatients ? JSON.parse(storedPatients) : [];
-      if (index < 0 || index >= patients.length) {
-        alert("Invalid patient index.");
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        const patient = await query.get(patientId);
+        
+        // Update fields from form values
+        patient.set("patientName", document.getElementById('patientName').value.trim());
+        patient.set("dob", document.getElementById('dob').value);
+        patient.set("location", document.getElementById('location').value.trim());
+        patient.set("phone", document.getElementById('phone').value.trim());
+        
+        // Gather dynamic entries for Medical History
+        const diseasesContainer = document.getElementById('diseasesContainer');
+        const diseaseEntries = diseasesContainer.getElementsByClassName('dynamic-entry');
+        let diseasesArray = [];
+        for (let entry of diseaseEntries) {
+          const inputs = entry.querySelectorAll('input[type="text"]');
+          if (inputs.length >= 2) {
+            const diseaseName = inputs[0].value;
+            const diseaseMeds = inputs[1].value;
+            if (diseaseName && diseaseMeds) {
+              diseasesArray.push({ disease: diseaseName, diseaseMedications: diseaseMeds });
+            }
+          }
+        }
+        patient.set("pastMedicalHistory", diseasesArray);
+        
+        const surgeriesContainer = document.getElementById('surgeriesContainer');
+        const surgeryEntries = surgeriesContainer.getElementsByClassName('dynamic-entry');
+        let surgeriesArray = [];
+        for (let entry of surgeryEntries) {
+          const inputs = entry.querySelectorAll('input');
+          if (inputs.length >= 3) {
+            const surgeryDate = inputs[0].value;
+            const surgeryType = inputs[1].value;
+            const surgeryIndication = inputs[2].value;
+            if (surgeryDate && surgeryType && surgeryIndication) {
+              surgeriesArray.push({ date: surgeryDate, type: surgeryType, indication: surgeryIndication });
+            }
+          }
+        }
+        patient.set("pastSurgicalHistory", surgeriesArray);
+        
+        const medicationsContainer = document.getElementById('medicationsContainer');
+        const medicationEntries = medicationsContainer.getElementsByClassName('dynamic-entry');
+        let medicationsArray = [];
+        for (let entry of medicationEntries) {
+          const inputs = entry.querySelectorAll('input');
+          if (inputs.length >= 3) {
+            const medName = inputs[0].value;
+            const dosage = inputs[1].value;
+            const frequency = inputs[2].value;
+            if (medName && dosage && frequency) {
+              medicationsArray.push({ name: medName, dosage: dosage, frequency: frequency });
+            }
+          }
+        }
+        patient.set("medications", medicationsArray);
+        
+        const visitsContainer = document.getElementById('visitsContainer');
+        const visitEntries = visitsContainer.getElementsByClassName('visit-entry');
+        let visitsArray = [];
+        for (let entry of visitEntries) {
+          const dateVal = entry.querySelector('input[type="date"]').value;
+          const complaintVal = entry.querySelector('input[type="text"]').value;
+          if (dateVal && complaintVal) {
+            visitsArray.push({ date: dateVal, chiefComplaint: complaintVal });
+          }
+        }
+        patient.set("visits", visitsArray);
+        
+        // Handle investigations if new files are attached
+        const investigationsInput = document.getElementById('investigations');
+        const files = investigationsInput.files;
+        if (files.length > 0) {
+          const investigationsArray = await readFilesAsDataURL(files);
+          patient.set("investigations", investigationsArray);
+        }
+        
+        await patient.save();
+        alert("Patient details updated successfully.");
         window.location.href = 'patientTable.html';
-        return;
+      } catch (error) {
+        console.error("Error updating patient:", error);
+        alert("Error updating patient: " + error.message);
       }
-      const patient = patients[index];
-      document.getElementById('patientID').value = patient.patientID;
-      document.getElementById('patientName').value = patient.patientName;
-      document.getElementById('dob').value = patient.dob;
-      document.getElementById('location').value = patient.location;
-      document.getElementById('phone').value = patient.phone;
-      
-      // Load dynamic Medical History entries
-      const diseasesContainer = document.getElementById('diseasesContainer');
-      diseasesContainer.innerHTML = '';
-      if (patient.pastMedicalHistory && patient.pastMedicalHistory.length > 0) {
-        patient.pastMedicalHistory.forEach(d => addDiseaseEntry(d));
-      }
-      
-      const surgeriesContainer = document.getElementById('surgeriesContainer');
-      surgeriesContainer.innerHTML = '';
-      if (patient.pastSurgicalHistory && patient.pastSurgicalHistory.length > 0) {
-        patient.pastSurgicalHistory.forEach(s => addSurgeryEntry(s));
-      }
-      
-      const medicationsContainer = document.getElementById('medicationsContainer');
-      medicationsContainer.innerHTML = '';
-      if (patient.medications && patient.medications.length > 0) {
-        patient.medications.forEach(m => addMedicationEntry(m));
-      }
-      
-      // Load visits entries
-      const visitsContainer = document.getElementById('visitsContainer');
-      visitsContainer.innerHTML = '';
-      if (patient.visits && patient.visits.length > 0) {
-        patient.visits.forEach(v => addVisitEntry(v));
-      }
-      
-      // Display current investigations
-      displayInvestigations(patient.investigations);
-    }
+    });
     
     // Helper function to display investigation thumbnails
     function displayInvestigations(investigations) {
@@ -658,16 +679,7 @@
       }
     }
     
-    // Helper: get query parameter from URL
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      setupHeader();
-      loadPatientDetails();
-    });
+    document.addEventListener('DOMContentLoaded', loadPatientDetails);
   </script>
 </body>
 </html>
