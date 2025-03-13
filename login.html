@@ -50,6 +50,7 @@
       font-size: var(--heading-font-size);
       color: var(--primary-color);
     }
+    /* Toggle Buttons */
     .toggle-buttons {
       display: flex;
       justify-content: center;
@@ -70,6 +71,7 @@
     .toggle-buttons button:hover {
       background: var(--primary-dark);
     }
+    /* Forms */
     form {
       display: none;
     }
@@ -119,9 +121,11 @@
 <body>
   <div class="container">
     <h1>Patient Information System</h1>
+    
+    <!-- Top Toggle Buttons -->
     <div class="toggle-buttons">
-      <button id="loginToggle">Login</button>
-      <button id="signupToggle">Sign Up</button>
+      <button id="showLoginBtn">Show Login</button>
+      <button id="showSignupBtn">Show Sign Up</button>
     </div>
     
     <!-- Login Form -->
@@ -132,6 +136,7 @@
       <label for="loginPassword">Password:</label>
       <input type="password" id="loginPassword" required>
       
+      <!-- Single "Login" Button for the login form -->
       <button type="submit" class="submit-btn">Login</button>
       <div id="loginError" class="error"></div>
     </form>
@@ -160,31 +165,38 @@
         <option value="Other medical">Other medical</option>
       </select>
       
+      <!-- Single "Sign Up" Button for the signup form -->
       <button type="submit" class="submit-btn">Sign Up</button>
       <div id="signupError" class="error"></div>
     </form>
   </div>
   
   <script>
-    // Toggle between login and signup forms
+    // Reference to forms
     const loginForm = document.getElementById("loginForm");
     const signupForm = document.getElementById("signupForm");
-    document.getElementById("loginToggle").addEventListener("click", () => {
+    
+    // Toggle Buttons
+    const showLoginBtn = document.getElementById("showLoginBtn");
+    const showSignupBtn = document.getElementById("showSignupBtn");
+    
+    // Toggle the forms based on which button is clicked
+    showLoginBtn.addEventListener("click", () => {
       loginForm.classList.add("active");
       signupForm.classList.remove("active");
     });
-    document.getElementById("signupToggle").addEventListener("click", () => {
+    showSignupBtn.addEventListener("click", () => {
       signupForm.classList.add("active");
       loginForm.classList.remove("active");
     });
     
     // Login form submission
-    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+    loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const username = document.getElementById("loginUsername").value.trim();
       const password = document.getElementById("loginPassword").value;
       
-      // Check for admin credentials (hard-coded)
+      // Hard-coded admin credentials check
       if (username === "mhh" && password === "907080") {
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("loggedUser", username);
@@ -204,7 +216,7 @@
     });
     
     // Sign up form submission
-    document.getElementById("signupForm").addEventListener("submit", async (event) => {
+    signupForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const name = document.getElementById("signupName").value.trim();
       const username = document.getElementById("signupUsername").value.trim();
@@ -217,15 +229,15 @@
       }
       
       try {
-        const user = new Parse.User();
-        user.set("name", name);  // extra field for real name
-        user.set("username", username);
-        user.set("password", password);
-        user.set("specialty", specialty);
-        // For demonstration purposes only: you might also store the plaintext password in a custom field (not recommended for production)
-        user.set("userPassword", password);
+        const newUser = new Parse.User();
+        newUser.set("name", name);
+        newUser.set("username", username);
+        newUser.set("password", password);
+        newUser.set("specialty", specialty);
+        // For demonstration only: storing plaintext password is insecure
+        newUser.set("userPassword", password);
         
-        const result = await user.signUp();
+        const result = await newUser.signUp();
         alert("Sign up successful! Your user id: " + result.id);
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("loggedUser", username);
