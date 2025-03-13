@@ -150,13 +150,13 @@
 </head>
 <body>
   <script>
-    // Redirect to login if not logged in
+    // Redirect to login page if not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
   </script>
   <div class="container">
-    <!-- Header with logged-in username and logout button -->
+    <!-- Header with logged-in user details -->
     <div class="header">
       <span id="welcomeUser">Welcome, Unknown</span>
       <button id="logoutBtn">Logout</button>
@@ -183,7 +183,7 @@
   </div>
   
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header: display logged-in username and setup logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
@@ -194,7 +194,7 @@
       });
     }
     
-    // Load patients from Parse and populate the table
+    // Function to load patients from Parse and populate the table
     async function loadPatients() {
       try {
         const Patient = Parse.Object.extend("Patient");
@@ -226,7 +226,7 @@
     
     // Function to redirect to the edit page with patientId as query parameter
     function showPatient(patientId) {
-      window.location.href = `editPatient.html?patientId=${patientId}`;
+      window.location.href = "editPatient.html?patientId=" + patientId;
     }
     
     // Function to delete a patient using Parse
@@ -248,7 +248,6 @@
       }
     }
     
-    // Initialize header and load patients on page load
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
       loadPatients();
