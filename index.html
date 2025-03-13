@@ -5,6 +5,13 @@
   <title>Patient Information System</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Include Parse SDK -->
+  <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script>
+    // Initialize Parse with your Back4App credentials
+    Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
+    Parse.serverURL = 'https://parseapi.back4app.com/';
+  </script>
   <style>
     :root {
       --primary-color: #4CAF50;  
@@ -39,7 +46,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       position: relative;
     }
-    /* Header with user details */
+    /* Header with user details (if used) */
     .header {
       display: flex;
       justify-content: flex-end;
@@ -76,7 +83,6 @@
     }
     form {
       margin: 0;
-      padding-top: 20px;
     }
     /* Flex container for sections */
     .sections-container {
@@ -144,13 +150,13 @@
     button:hover {
       background: var(--primary-dark);
     }
-    /* Styling for the Show Patients List button */
-    .show-patients-btn {
+    /* Styling for the "Show patients list" button */
+    .button-container button {
       background: var(--accent-color);
       font-size: 1.2rem;
       padding: 14px 28px;
     }
-    .show-patients-btn:hover {
+    .button-container button:hover {
       background: #e64a19;
     }
     /* Dynamic entries styling */
@@ -185,7 +191,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header with user details -->
+    <!-- Optional header if you want to show logged-in user details -->
     <div class="header">
       <span id="welcomeUser">Welcome, Unknown</span>
       <button id="logoutBtn">Logout</button>
@@ -243,7 +249,7 @@
       </div>
     </form>
     <div class="button-container">
-      <button type="button" class="show-patients-btn" onclick="window.open('patientTable.html', '_blank')">Show patients list</button>
+      <button type="button" onclick="window.open('patientTable.html', '_blank')">Show patients list</button>
     </div>
   </div>
   
@@ -606,19 +612,37 @@
           img.alt = 'Investigation ' + (idx + 1);
           img.title = 'Click to view full image';
           img.addEventListener('click', () => {
-            window.open(imgData, '_blank');
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+              <html>
+              <head>
+                <title>Investigation Image</title>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #000;
+                  }
+                  img {
+                    max-width: 100%;
+                    max-height: 100vh;
+                  }
+                </style>
+              </head>
+              <body>
+                <img src="${imgData}" alt="Investigation Image"/>
+              </body>
+              </html>
+            `);
           });
           container.appendChild(img);
         });
       } else {
         container.innerHTML = '<p>No investigation images attached.</p>';
       }
-    }
-    
-    // Helper: get query parameter from URL
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
     }
     
     document.addEventListener('DOMContentLoaded', () => {
