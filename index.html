@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Patient Information System - Online Saving</title>
-  <!-- Include the Parse SDK -->
+  <title>Patient Information System</title>
+  <!-- Import Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Include Parse SDK -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
   <script>
     // Initialize Parse with your Back4App credentials
@@ -11,139 +13,292 @@
     Parse.serverURL = 'https://parseapi.back4app.com/';
   </script>
   <style>
-    /* Minimal styling for demo */
+    :root {
+      --primary-color: #4CAF50;
+      --primary-dark: #388E3C;
+      --secondary-color: #007BFF;
+      --accent-color: #FF5722; /* For navigation button */
+      --bg-color: #f9f9f9;
+      --card-bg: #ffffff;
+      --heading-bg: #4CAF50;
+      --section-heading-bg: #e0f2f1;
+      --heading-text-color: #fff;
+      --section-heading-text-color: #333;
+      --border-radius: 8px;
+      --font-size: 1.1rem;
+      --heading-font-size: 1.8rem;
+      --section-heading-size: 1.2rem;
+      --spacing: 20px;
+    }
     body {
       font-family: 'Roboto', sans-serif;
+      background: var(--bg-color);
       margin: 0;
-      padding: 20px;
-      background: #f5f5f5;
+      padding: var(--spacing);
+      color: #333;
     }
     .container {
-      max-width: 600px;
+      max-width: 1200px;
       margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
+      background: var(--card-bg);
+      padding: var(--spacing);
+      border-radius: var(--border-radius);
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      position: relative;
     }
+    /* Header with logged-in user details */
+    .header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: var(--spacing);
+    }
+    .header span {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-right: 10px;
+    }
+    .header button {
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      background: var(--secondary-color);
+      border: none;
+      border-radius: var(--border-radius);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .header button:hover {
+      background: #006ae0;
+    }
+    /* Main heading */
     h1 {
+      font-size: var(--heading-font-size);
+      text-align: center;
+      margin-bottom: var(--spacing);
+      background: var(--heading-bg);
+      color: var(--heading-text-color);
+      padding: 12px;
+      border: 2px solid var(--primary-color);
+      border-radius: var(--border-radius);
+    }
+    form {
+      margin: 0;
+    }
+    /* Sections layout */
+    .sections-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing);
+      justify-content: center;
+    }
+    section {
+      flex: 1 1 300px;
+      min-width: 300px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      padding: var(--spacing);
+      box-sizing: border-box;
+    }
+    section h2 {
+      font-size: var(--section-heading-size);
+      margin-bottom: 10px;
+      background: var(--section-heading-bg);
+      color: var(--section-heading-text-color);
+      padding: 8px;
+      border-radius: var(--border-radius);
       text-align: center;
     }
-    form label {
+    label {
       display: block;
       margin-top: 10px;
+      font-size: var(--font-size);
       font-weight: 500;
     }
-    form input[type="text"],
-    form input[type="date"],
-    form textarea {
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
       width: 100%;
+      padding: 10px;
       margin-top: 5px;
-      padding: 8px;
+      font-size: var(--font-size);
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
     }
-    form button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #4CAF50;
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
+    textarea {
+      resize: vertical;
     }
-    form button:hover {
-      background: #388E3C;
+    input[type="file"] {
+      margin-top: 10px;
     }
+    .submit-container,
     .button-container {
       text-align: center;
-      margin-top: 20px;
+      margin-top: var(--spacing);
     }
-    .button-container button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      background: #FF5722;
-      color: #fff;
+    button {
+      padding: 12px 24px;
+      font-size: var(--font-size);
+      background: var(--primary-color);
       border: none;
-      border-radius: 6px;
+      border-radius: var(--border-radius);
+      color: #fff;
       cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: var(--primary-dark);
+    }
+    /* Show patients list button */
+    .button-container button {
+      background: var(--accent-color);
+      font-size: 1.2rem;
+      padding: 14px 28px;
     }
     .button-container button:hover {
-      background: #E64A19;
+      background: #e64a19;
     }
-    .message {
+    /* Dynamic entries styling */
+    .dynamic-entry {
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      padding: 10px;
       margin-top: 10px;
+      background: #fafafa;
+    }
+    .dynamic-entry button {
+      margin-top: 10px;
+      background: red;
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .sub-section {
+      margin-bottom: var(--spacing);
+    }
+    .sub-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
       text-align: center;
-      font-weight: 500;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <span id="welcomeUser">Welcome, Unknown</span>
+      <button id="logoutBtn">Logout</button>
+    </div>
     <h1>Patient Information System</h1>
     <form id="patientForm">
-      <label for="patientName">Name:</label>
-      <input type="text" id="patientName" required>
-      
-      <label for="dob">Date of Birth:</label>
-      <input type="date" id="dob" required>
-      
-      <label for="location">Location:</label>
-      <input type="text" id="location" required>
-      
-      <label for="phone">Phone Number:</label>
-      <input type="text" id="phone" required>
-      
-      <label for="notes">Optional Notes:</label>
-      <textarea id="notes" rows="3"></textarea>
-      
-      <button type="submit">Submit Patient Information</button>
+      <div class="sections-container">
+        <!-- Personal Details -->
+        <section>
+          <h2>Personal Details</h2>
+          <label for="patientName">Name:</label>
+          <input type="text" id="patientName" name="patientName" required>
+          <label for="dob">Date of Birth:</label>
+          <input type="date" id="dob" name="dob" required>
+          <label for="location">Location:</label>
+          <input type="text" id="location" name="location" required>
+          <label for="phone">Phone Number:</label>
+          <input type="text" id="phone" name="phone" required>
+        </section>
+        <!-- Medical History -->
+        <section>
+          <h2>Medical History</h2>
+          <div class="sub-section">
+            <h3>Past Medical History</h3>
+            <div id="diseasesContainer"></div>
+            <button type="button" id="addDiseaseBtn">Add Disease</button>
+          </div>
+          <div class="sub-section">
+            <h3>Past Surgical History</h3>
+            <div id="surgeriesContainer"></div>
+            <button type="button" id="addSurgeryBtn">Add Surgery</button>
+          </div>
+          <div class="sub-section">
+            <h3>Medications</h3>
+            <div id="medicationsContainer"></div>
+            <button type="button" id="addMedicationBtn">Add Medication</button>
+          </div>
+        </section>
+        <!-- Visits -->
+        <section>
+          <h2>Visits</h2>
+          <div id="visitsContainer"></div>
+          <button type="button" id="addVisitBtn">Add Visit</button>
+        </section>
+        <!-- Investigations -->
+        <section>
+          <h2>Investigations</h2>
+          <label for="investigations">Attach Photos (Multiple):</label>
+          <input type="file" id="investigations" name="investigations" multiple accept="image/*">
+        </section>
+      </div>
+      <div class="submit-container">
+        <button type="submit">Submit Patient Information</button>
+      </div>
     </form>
-    
     <div class="button-container">
-      <button type="button" onclick="window.open('patientTable.html', '_blank')">
-        Show Patients List
-      </button>
+      <button type="button" onclick="window.open('patientTable.html', '_blank')">Show patients list</button>
     </div>
-    
-    <div class="message" id="statusMessage"></div>
   </div>
   
   <script>
-    // On form submission, create a new "Patient" object in Back4App
-    document.getElementById('patientForm').addEventListener('submit', async (event) => {
+    // Setup header: display logged-in username and add logout functionality
+    function setupHeader() {
+      const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
+      document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('loggedIn');
+        localStorage.removeItem('loggedUser');
+        window.location.href = 'login.html';
+      });
+    }
+    
+    // Call setupHeader on page load
+    document.addEventListener('DOMContentLoaded', setupHeader);
+    
+    // When saving patient data online using Parse:
+    document.getElementById('patientForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       const statusElem = document.getElementById('statusMessage');
       
+      // Create a new Parse object for the "Patient" class
+      const Patient = Parse.Object.extend("Patient");
+      const newPatient = new Patient();
+      
+      // Gather form values
+      const patientName = document.getElementById('patientName').value.trim();
+      const dob = document.getElementById('dob').value;
+      const location = document.getElementById('location').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      
+      // Set fields on the Parse object
+      newPatient.set("patientName", patientName);
+      newPatient.set("dob", dob);
+      newPatient.set("location", location);
+      newPatient.set("phone", phone);
+      
+      // You can add more fields (such as medical history, visits, etc.)
+      // For this example, we are keeping it simple
+      
       try {
-        // Create a new parse object for your "Patient" class
-        const Patient = Parse.Object.extend("Patient");  // Make sure you created "Patient" class in Back4App
-        const newPatient = new Patient();
-
-        // Gather form values
-        const patientName = document.getElementById('patientName').value.trim();
-        const dob = document.getElementById('dob').value;
-        const location = document.getElementById('location').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const notes = document.getElementById('notes').value.trim();
-        
-        // Set Parse Object fields
-        newPatient.set("patientName", patientName);
-        newPatient.set("dob", dob);
-        newPatient.set("location", location);
-        newPatient.set("phone", phone);
-        newPatient.set("notes", notes);
-        
-        // Save to Back4App
-        await newPatient.save();
-        
-        statusElem.textContent = "Patient saved online successfully! Object ID: " + newPatient.id;
-        
-        // Optionally, reset the form
+        const savedPatient = await newPatient.save();
+        alert("Patient saved online successfully! Object ID: " + savedPatient.id);
         document.getElementById('patientForm').reset();
-        
       } catch (error) {
         console.error("Error saving patient:", error);
-        statusElem.textContent = "Error saving patient: " + error.message;
+        alert("Error saving patient: " + error.message);
       }
     });
   </script>
