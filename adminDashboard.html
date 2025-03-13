@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard - Manage Users & Patients</title>
+  <title>Admin Dashboard - Manage Users & Patient Trends</title>
   <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <!-- Include Parse SDK -->
+  <!-- Include Parse SDK and Chart.js -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     // Initialize Parse with your Back4App credentials
     Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
@@ -41,6 +42,7 @@
       border-radius: var(--border-radius);
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+    /* Header */
     .header {
       display: flex;
       justify-content: space-between;
@@ -52,7 +54,7 @@
       margin: 0;
       color: var(--primary-color);
     }
-    .header .user-info {
+    .user-info {
       font-size: 1rem;
     }
     .header button {
@@ -68,6 +70,7 @@
     .header button:hover {
       background: #006ae0;
     }
+    /* Sections */
     .section {
       margin-bottom: var(--spacing);
       border: 1px solid #ddd;
@@ -126,13 +129,14 @@
     .delete-btn:hover {
       background-color: #D32F2F;
     }
+    /* Navigation Buttons */
     .nav-buttons {
       text-align: center;
       margin-top: var(--spacing);
       display: flex;
       gap: var(--spacing);
-      justify-content: center;
       flex-wrap: wrap;
+      justify-content: center;
     }
     .nav-buttons button {
       background: var(--accent-color);
@@ -166,7 +170,7 @@
       </div>
     </div>
     
-    <!-- Users Section (Visible only for admin) -->
+    <!-- Users Section (for admin only) -->
     <div class="section" id="usersSection">
       <h2>Registered Users</h2>
       <table id="usersTable">
@@ -178,9 +182,10 @@
           </tr>
         </thead>
         <tbody id="usersTableBody">
-          <!-- Users will be loaded here -->
+          <!-- User rows will be loaded here -->
         </tbody>
       </table>
+      <button id="addUserBtn">Add User</button>
     </div>
     
     <!-- Patients Section -->
@@ -198,9 +203,15 @@
           </tr>
         </thead>
         <tbody id="patientsTableBody">
-          <!-- Patients will be loaded here -->
+          <!-- Patient rows will be loaded here -->
         </tbody>
       </table>
+    </div>
+    
+    <!-- Patient Trends by User Chart -->
+    <div class="section" id="patientTrendsSection">
+      <h2>Patient Trends by User</h2>
+      <canvas id="patientCountChart"></canvas>
     </div>
     
     <!-- Navigation Buttons -->
@@ -222,7 +233,7 @@
       });
     }
     
-    // Ensure this page is accessible only for admin (mhh)
+    // Ensure this page is only accessible to admin (username "mhh")
     function checkAdmin() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       if (loggedUser !== "mhh") {
@@ -240,7 +251,7 @@
         usersTableBody.innerHTML = "";
         results.forEach((user) => {
           const row = document.createElement('tr');
-          // For demonstration, we assume a custom field "userPassword" exists (insecure in production)
+          // For demo purposes, we assume a custom field "userPassword" exists
           row.innerHTML = `<td>${user.get("username") || ""}</td>
                            <td>${user.get("userPassword") || "N/A"}</td>
                            <td>
@@ -254,7 +265,7 @@
       }
     }
     
-    // Edit user: redirect to an edit page for the user (editUser.html)
+    // Edit user: redirect to editUser.html with userId as query parameter
     function editUser(userId) {
       window.location.href = "editUser.html?userId=" + userId;
     }
@@ -277,12 +288,11 @@
       }
     }
     
-    // Load patients (all patients)
+    // Load patients (all patients, admin sees them all)
     async function loadPatients() {
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
-        // Admin sees all patients (no filtering by createdBy)
         const results = await query.find();
         const patientsTableBody = document.getElementById('patientsTableBody');
         patientsTableBody.innerHTML = "";
@@ -305,9 +315,69 @@
       }
     }
     
-    // Edit patient: redirect to edit page for patient
+    // Edit patient: redirect to editPatient.html with patientId as query parameter
     function editPatient(patientId) {
       window.location.href = "editPatient.html?patientId=" + patientId;
+    }
+    
+    // Load patient trends: group patients by their creator (username) and count them
+    async function loadPatientTrends() {
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        // Admin sees all patients, so no filtering on createdBy
+        query.include("createdBy");
+        const results = await query.find();
+        
+        // Group patients by username
+        const userCounts = {};
+        results.forEach((patient) => {
+          const creator = patient.get("createdBy");
+          if (creator) {
+            const username = creator.get("username") || "Unknown";
+            userCounts[username] = (userCounts[username] || 0) + 1;
+          }
+        });
+        
+        const usernames = Object.keys(userCounts);
+        const counts = usernames.map(username => userCounts[username]);
+        renderBarChart("patientCountChart", usernames, counts, "Patients Count");
+      } catch (error) {
+        console.error("Error loading patient trends:", error);
+      }
+    }
+    
+    // Render a bar chart using Chart.js
+    function renderBarChart(canvasId, labels, data, datasetLabel) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: datasetLabel,
+            data: data,
+            backgroundColor: 'rgba(76, 175, 80, 0.6)',
+            borderColor: 'rgba(76, 175, 80, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: { display: true, text: datasetLabel },
+              ticks: { autoSkip: false }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Count' }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
     }
     
     // Initialization on page load
@@ -316,6 +386,7 @@
       checkAdmin();
       loadUsers();
       loadPatients();
+      loadPatientTrends();
     });
   </script>
 </body>
