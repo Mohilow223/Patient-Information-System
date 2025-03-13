@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Patient Information System</title>
+  <!-- Import Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --primary-dark: #388E3C;
+      --bg-color: #f5f5f5;
+      --card-bg: #ffffff;
+      --border-radius: 8px;
+      --transition-speed: 0.3s;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background: var(--bg-color);
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+    form input[type="text"],
+    form input[type="date"],
+    form textarea,
+    form select {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      transition: border var(--transition-speed);
+      font-size: 1rem;
+    }
+    form input[type="text"]:focus,
+    form input[type="date"]:focus,
+    form textarea:focus,
+    form select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    form input[type="file"] {
+      margin-top: 10px;
+    }
+    form button {
+      display: block;
+      margin: 30px auto;
+      padding: 12px 30px;
+      font-size: 1rem;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+    }
+    form button:hover {
+      background-color: var(--primary-dark);
+    }
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .button-container button {
+      padding: 12px 25px;
+      font-size: 1rem;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+    }
+    .button-container button:hover {
+      background-color: var(--primary-dark);
+    }
+    /* Styles for dynamic visits */
+    .visit-entry {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: var(--border-radius);
+    }
+    .visit-entry label {
+      font-weight: 500;
+    }
+    .visit-entry input[type="date"],
+    .visit-entry input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+    }
+    .visit-entry button {
+      margin-top: 10px;
+      background-color: red;
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Patient Information System</h1>
+    <form id="patientForm">
+      <h2>Enter Patient Details</h2>
+      
+      <label for="patientName">Name:</label>
+      <input type="text" id="patientName" name="patientName" required>
+      
+      <label for="dob">Date of Birth:</label>
+      <input type="date" id="dob" name="dob" required>
+      
+      <label for="location">Location:</label>
+      <input type="text" id="location" name="location" required>
+      
+      <label for="phone">Phone Number:</label>
+      <input type="text" id="phone" name="phone" required>
+      
+      <label for="pastMedicalHistory">Past Medical History:</label>
+      <textarea id="pastMedicalHistory" name="pastMedicalHistory" rows="3"></textarea>
+      
+      <label for="pastSurgicalHistory">Past Surgical History:</label>
+      <textarea id="pastSurgicalHistory" name="pastSurgicalHistory" rows="3"></textarea>
+      
+      <label for="detailsOfSurgeries">Details of Surgeries:</label>
+      <textarea id="detailsOfSurgeries" name="detailsOfSurgeries" rows="3"></textarea>
+      
+      <label for="medications">Medications:</label>
+      <textarea id="medications" name="medications" rows="3"></textarea>
+      
+      <!-- Updated Visits Section -->
+      <label>Visits:</label>
+      <div id="visitsContainer"></div>
+      <button type="button" id="addVisitBtn">Add Visit</button>
+      
+      <label for="investigations">Investigations (Attach multiple photos):</label>
+      <input type="file" id="investigations" name="investigations" multiple accept="image/*">
+      
+      <button type="submit">Submit</button>
+    </form>
+    
+    <div class="button-container">
+      <button onclick="window.open('patientTable.html', '_blank')">
+        Go to Patient Data Table
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Generate a unique patient ID
+    function generatePatientID() {
+      return 'PID' + Date.now() + Math.floor(Math.random() * 1000);
+    }
+    
+    // Read multiple files as data URLs
+    function readFilesAsDataURL(files) {
+      const promises = [];
+      for (let i = 0; i < files.length; i++) {
+        promises.push(new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            resolve(e.target.result);
+          };
+          reader.onerror = function(err) {
+            reject(err);
+          };
+          reader.readAsDataURL(files[i]);
+        }));
+      }
+      return Promise.all(promises);
+    }
+    
+    // Function to add a new visit entry
+    function addVisitEntry(visitData) {
+      const container = document.getElementById('visitsContainer');
+      const visitDiv = document.createElement('div');
+      visitDiv.className = 'visit-entry';
+      
+      const dateLabel = document.createElement('label');
+      dateLabel.textContent = 'Visit Date:';
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.required = true;
+      
+      const complaintLabel = document.createElement('label');
+      complaintLabel.textContent = 'Chief Complaint:';
+      complaintLabel.style.display = 'block';
+      complaintLabel.style.marginTop = "10px";
+      const complaintInput = document.createElement('input');
+      complaintInput.type = 'text';
+      complaintInput.placeholder = 'Enter chief complaint';
+      complaintInput.required = true;
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = 'Remove Visit';
+      removeBtn.addEventListener('click', () => {
+        container.removeChild(visitDiv);
+      });
+      
+      if (visitData) {
+        dateInput.value = visitData.date;
+        complaintInput.value = visitData.chiefComplaint;
+      }
+      
+      visitDiv.appendChild(dateLabel);
+      visitDiv.appendChild(dateInput);
+      visitDiv.appendChild(complaintLabel);
+      visitDiv.appendChild(complaintInput);
+      visitDiv.appendChild(removeBtn);
+      
+      container.appendChild(visitDiv);
+    }
+    
+    document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
+    
+    document.getElementById('patientForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      // Auto-generate patient ID
+      const patientID = generatePatientID();
+      
+      // Extract form values
+      const patientName = document.getElementById('patientName').value;
+      const dob = document.getElementById('dob').value;
+      const location = document.getElementById('location').value;
+      const phone = document.getElementById('phone').value;
+      const pastMedicalHistory = document.getElementById('pastMedicalHistory').value;
+      const pastSurgicalHistory = document.getElementById('pastSurgicalHistory').value;
+      const detailsOfSurgeries = document.getElementById('detailsOfSurgeries').value;
+      const medications = document.getElementById('medications').value;
+      
+      // Gather visits entries
+      const visitsContainer = document.getElementById('visitsContainer');
+      const visitEntries = visitsContainer.getElementsByClassName('visit-entry');
+      let visitsArray = [];
+      for (let entry of visitEntries) {
+        let dateVal = entry.querySelector('input[type="date"]').value;
+        let complaintVal = entry.querySelector('input[type="text"]').value;
+        if (dateVal && complaintVal) {
+          visitsArray.push({ date: dateVal, chiefComplaint: complaintVal });
+        }
+      }
+      
+      // Handle investigations file attachments
+      const investigationsInput = document.getElementById('investigations');
+      const files = investigationsInput.files;
+      let investigations = [];
+      if (files.length > 0) {
+        investigations = await readFilesAsDataURL(files);
+      }
+      
+      // Create patient object with all details
+      const newPatient = {
+        patientID,
+        patientName,
+        dob,
+        location,
+        phone,
+        pastMedicalHistory,
+        pastSurgicalHistory,
+        detailsOfSurgeries,
+        medications,
+        visits: visitsArray,
+        investigations
+      };
+      
+      // Retrieve existing patients from local storage (or initialize an empty array)
+      let patients = localStorage.getItem('patients');
+      patients = patients ? JSON.parse(patients) : [];
+      
+      // Add the new patient and save
+      patients.push(newPatient);
+      localStorage.setItem('patients', JSON.stringify(patients));
+      
+      // Reset the form and visits container
+      document.getElementById('patientForm').reset();
+      document.getElementById('visitsContainer').innerHTML = '';
+      alert('Patient information submitted successfully.');
+    });
+  </script>
+</body>
+</html>

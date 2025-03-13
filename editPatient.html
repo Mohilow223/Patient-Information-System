@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Patient Details</title>
+  <!-- Import Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --primary-dark: #388E3C;
+      --bg-color: #f5f5f5;
+      --card-bg: #ffffff;
+      --border-radius: 8px;
+      --transition-speed: 0.3s;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background: var(--bg-color);
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+    form input[type="text"],
+    form input[type="date"],
+    form textarea,
+    form select {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      transition: border var(--transition-speed);
+      font-size: 1rem;
+    }
+    form input[type="text"]:focus,
+    form input[type="date"]:focus,
+    form textarea:focus,
+    form select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    form input[type="file"] {
+      margin-top: 10px;
+    }
+    form button {
+      display: block;
+      margin: 30px auto;
+      padding: 12px 30px;
+      font-size: 1rem;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background-color var(--transition-speed);
+    }
+    form button:hover {
+      background-color: var(--primary-dark);
+    }
+    /* Styles for dynamic visits */
+    .visit-entry {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: var(--border-radius);
+    }
+    .visit-entry label {
+      font-weight: 500;
+    }
+    .visit-entry input[type="date"],
+    .visit-entry input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+    }
+    .visit-entry button {
+      margin-top: 10px;
+      background-color: red;
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    /* Thumbnail container styles for investigations */
+    .thumb-container {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .thumb-container img {
+      width: 100px;
+      height: auto;
+      border-radius: var(--border-radius);
+      border: 1px solid #ddd;
+      padding: 4px;
+      cursor: pointer;
+      transition: transform var(--transition-speed);
+      background: #fff;
+    }
+    .thumb-container img:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Edit Patient Details</h1>
+    <form id="editPatientForm">
+      <label for="patientID">Patient ID:</label>
+      <input type="text" id="patientID" name="patientID" readonly>
+      
+      <label for="patientName">Name:</label>
+      <input type="text" id="patientName" name="patientName" required>
+      
+      <label for="dob">Date of Birth:</label>
+      <input type="date" id="dob" name="dob" required>
+      
+      <label for="location">Location:</label>
+      <input type="text" id="location" name="location" required>
+      
+      <label for="phone">Phone Number:</label>
+      <input type="text" id="phone" name="phone" required>
+      
+      <label for="pastMedicalHistory">Past Medical History:</label>
+      <textarea id="pastMedicalHistory" name="pastMedicalHistory" rows="3"></textarea>
+      
+      <label for="pastSurgicalHistory">Past Surgical History:</label>
+      <textarea id="pastSurgicalHistory" name="pastSurgicalHistory" rows="3"></textarea>
+      
+      <label for="detailsOfSurgeries">Details of Surgeries:</label>
+      <textarea id="detailsOfSurgeries" name="detailsOfSurgeries" rows="3"></textarea>
+      
+      <label for="medications">Medications:</label>
+      <textarea id="medications" name="medications" rows="3"></textarea>
+      
+      <!-- Updated Visits Section -->
+      <label>Visits:</label>
+      <div id="visitsContainer"></div>
+      <button type="button" id="addVisitBtn">Add Visit</button>
+      
+      <label for="investigations">Investigations (Attach new photos to replace current ones, leave empty to keep existing):</label>
+      <input type="file" id="investigations" name="investigations" multiple accept="image/*">
+      
+      <h3>Current Investigations</h3>
+      <div id="investigationsContainer" class="thumb-container"></div>
+      
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+  
+  <script>
+    // Helper: get query parameter from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    // Helper: read multiple files as data URLs
+    function readFilesAsDataURL(files) {
+      const promises = [];
+      for (let i = 0; i < files.length; i++) {
+        promises.push(new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            resolve(e.target.result);
+          };
+          reader.onerror = function(err) {
+            reject(err);
+          };
+          reader.readAsDataURL(files[i]);
+        }));
+      }
+      return Promise.all(promises);
+    }
+    
+    // Function to add a new visit entry
+    function addVisitEntry(visitData) {
+      const container = document.getElementById('visitsContainer');
+      const visitDiv = document.createElement('div');
+      visitDiv.className = 'visit-entry';
+      
+      const dateLabel = document.createElement('label');
+      dateLabel.textContent = 'Visit Date:';
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.required = true;
+      
+      const complaintLabel = document.createElement('label');
+      complaintLabel.textContent = 'Chief Complaint:';
+      complaintLabel.style.display = 'block';
+      complaintLabel.style.marginTop = "10px";
+      const complaintInput = document.createElement('input');
+      complaintInput.type = 'text';
+      complaintInput.placeholder = 'Enter chief complaint';
+      complaintInput.required = true;
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = 'Remove Visit';
+      removeBtn.addEventListener('click', () => {
+        container.removeChild(visitDiv);
+      });
+      
+      if (visitData) {
+        dateInput.value = visitData.date;
+        complaintInput.value = visitData.chiefComplaint;
+      }
+      
+      visitDiv.appendChild(dateLabel);
+      visitDiv.appendChild(dateInput);
+      visitDiv.appendChild(complaintLabel);
+      visitDiv.appendChild(complaintInput);
+      visitDiv.appendChild(removeBtn);
+      
+      container.appendChild(visitDiv);
+    }
+    
+    document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
+    
+    // Function to display investigation thumbnails
+    function displayInvestigations(investigations) {
+      const container = document.getElementById('investigationsContainer');
+      container.innerHTML = '';
+      if (investigations && investigations.length > 0) {
+        investigations.forEach((imgData, idx) => {
+          const img = document.createElement('img');
+          img.src = imgData;
+          img.alt = 'Investigation ' + (idx + 1);
+          img.title = 'Click to view full image';
+          img.addEventListener('click', () => {
+            window.open(imgData, '_blank');
+          });
+          container.appendChild(img);
+        });
+      } else {
+        container.innerHTML = '<p>No investigation images attached.</p>';
+      }
+    }
+    
+    function loadPatientDetails() {
+      const index = getQueryParam('index');
+      if (index === null) {
+        alert("No patient selected for editing.");
+        window.location.href = 'patientTable.html';
+        return;
+      }
+      const storedPatients = localStorage.getItem('patients');
+      const patients = storedPatients ? JSON.parse(storedPatients) : [];
+      if (index < 0 || index >= patients.length) {
+        alert("Invalid patient index.");
+        window.location.href = 'patientTable.html';
+        return;
+      }
+      const patient = patients[index];
+      document.getElementById('patientID').value = patient.patientID;
+      document.getElementById('patientName').value = patient.patientName;
+      document.getElementById('dob').value = patient.dob;
+      document.getElementById('location').value = patient.location;
+      document.getElementById('phone').value = patient.phone;
+      document.getElementById('pastMedicalHistory').value = patient.pastMedicalHistory || '';
+      document.getElementById('pastSurgicalHistory').value = patient.pastSurgicalHistory || '';
+      document.getElementById('detailsOfSurgeries').value = patient.detailsOfSurgeries || '';
+      document.getElementById('medications').value = patient.medications || '';
+      
+      // Populate visits entries
+      const visitsContainer = document.getElementById('visitsContainer');
+      visitsContainer.innerHTML = '';
+      if (patient.visits && patient.visits.length > 0) {
+        patient.visits.forEach(visit => {
+          addVisitEntry(visit);
+        });
+      }
+      
+      // Display current investigations
+      displayInvestigations(patient.investigations);
+    }
+    
+    document.getElementById('editPatientForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const index = getQueryParam('index');
+      const storedPatients = localStorage.getItem('patients');
+      let patients = storedPatients ? JSON.parse(storedPatients) : [];
+      
+      // Gather updated visits entries
+      const visitsContainer = document.getElementById('visitsContainer');
+      const visitEntries = visitsContainer.getElementsByClassName('visit-entry');
+      let visitsArray = [];
+      for (let entry of visitEntries) {
+        let dateVal = entry.querySelector('input[type="date"]').value;
+        let complaintVal = entry.querySelector('input[type="text"]').value;
+        if (dateVal && complaintVal) {
+          visitsArray.push({ date: dateVal, chiefComplaint: complaintVal });
+        }
+      }
+      
+      // Build updated patient object, keeping existing investigations by default
+      const updatedPatient = {
+        patientID: document.getElementById('patientID').value,
+        patientName: document.getElementById('patientName').value,
+        dob: document.getElementById('dob').value,
+        location: document.getElementById('location').value,
+        phone: document.getElementById('phone').value,
+        pastMedicalHistory: document.getElementById('pastMedicalHistory').value,
+        pastSurgicalHistory: document.getElementById('pastSurgicalHistory').value,
+        detailsOfSurgeries: document.getElementById('detailsOfSurgeries').value,
+        medications: document.getElementById('medications').value,
+        visits: visitsArray,
+        investigations: patients[index].investigations // default: keep existing
+      };
+      
+      // If new files are attached, update investigations with new images
+      const investigationsInput = document.getElementById('investigations');
+      const files = investigationsInput.files;
+      if (files.length > 0) {
+        updatedPatient.investigations = await readFilesAsDataURL(files);
+      }
+      
+      patients[index] = updatedPatient;
+      localStorage.setItem('patients', JSON.stringify(patients));
+      alert("Patient details updated successfully.");
+      window.location.href = 'patientTable.html';
+    });
+    
+    document.addEventListener('DOMContentLoaded', loadPatientDetails);
+  </script>
+</body>
+</html>
