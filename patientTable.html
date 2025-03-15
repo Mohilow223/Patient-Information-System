@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <title>Patient Data Table</title>
   <!-- Import Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Include Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Include Parse SDK -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
   <script>
@@ -14,155 +16,222 @@
   </script>
   <style>
     :root {
-      --primary-color: #4CAF50;
-      --primary-dark: #388E3C;
-      --secondary-color: #007BFF;
-      --dataEntry-btn-bg: #FF5722; /* Orange for navigation buttons */
-      --dataEntry-btn-hover: #E64A19;
-      --bg-color: #f9f9f9;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --secondary: #3b82f6;
+      --background: #f8fafc;
       --card-bg: #ffffff;
-      --border-radius: 8px;
-      --font-size: 1.1rem;
-      --heading-font-size: 2rem;
-      --spacing: 20px;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: var(--bg-color);
+
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: var(--spacing);
-      color: #333;
+      padding: 0;
     }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+
     .container {
       max-width: 1200px;
-      margin: auto;
+      margin: 0 auto;
       background: var(--card-bg);
-      padding: var(--spacing);
-      border-radius: var(--border-radius);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      position: relative;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
+
     /* Header */
     .header {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      margin-bottom: var(--spacing);
+      padding: 20px 24px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
     }
-    .header span {
-      font-weight: bold;
-      font-size: 1rem;
-      margin-right: 10px;
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
     }
-    .header button {
-      padding: 6px 12px;
-      font-size: 0.9rem;
-      background: var(--secondary-color);
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-info span {
+      font-weight: 500;
+      color: var(--text-light);
+    }
+
+    .logout-btn {
+      background: var(--primary);
+      color: white;
       border: none;
-      border-radius: var(--border-radius);
-      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--radius);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .header button:hover {
-      background: #006ae0;
+
+    .logout-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
     }
-    h1 {
-      font-size: var(--heading-font-size);
-      text-align: center;
-      margin-bottom: var(--spacing);
-      background: var(--primary-color);
-      color: #fff;
-      padding: 10px;
-      border-radius: var(--border-radius);
-    }
+
     /* Search Box */
     .search-container {
-      text-align: center;
-      margin-bottom: var(--spacing);
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
     }
+
     .search-container input {
-      width: 50%;
-      padding: 10px;
-      font-size: var(--font-size);
-      border: 1px solid #ccc;
-      border-radius: var(--border-radius);
+      width: 100%;
+      padding: 10px 16px;
+      font-size: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       outline: none;
+      transition: border-color 0.2s;
     }
-    /* Table styling */
+
+    .search-container input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Table Styling */
+    .table-container {
+      padding: 24px;
+      overflow-x: auto;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: var(--spacing);
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
     }
+
     th, td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      font-size: var(--font-size);
+      padding: 12px 16px;
       text-align: left;
-      vertical-align: middle;
+      font-size: 14px;
     }
+
     th {
-      background: var(--primary-color);
-      color: #fff;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
     }
-    tr:nth-child(even) {
-      background: #f9f9f9;
+
+    tr {
+      border-bottom: 1px solid var(--border);
     }
+
+    tr:last-child {
+      border-bottom: none;
+    }
+
     tr:hover {
-      background: #f1f1f1;
+      background: var(--background);
     }
-    .button-container {
-      text-align: center;
-      margin-top: var(--spacing);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: var(--spacing);
-    }
-    .button-container button {
-      background: var(--dataEntry-btn-bg);
-      color: #fff;
-      padding: 14px 28px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .button-container button:hover {
-      background: var(--dataEntry-btn-hover);
-    }
-    /* Action buttons styling */
+
+    /* Action Buttons */
     .action-buttons {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
     }
+
     .action-buttons button {
-      padding: 8px 12px;
-      font-size: 1rem;
+      padding: 6px 12px;
+      font-size: 12px;
       border: none;
-      border-radius: var(--border-radius);
+      border-radius: var(--radius);
       cursor: pointer;
-      transition: background 0.3s;
-      min-width: 70px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+
     .show-btn {
-      background-color: #2196F3;
-      color: #fff;
+      background: var(--secondary);
+      color: white;
     }
+
     .show-btn:hover {
-      background-color: #1976D2;
+      background: #2563eb;
     }
+
     .delete-btn {
-      background-color: #F44336;
-      color: #fff;
+      background: #ef4444;
+      color: white;
     }
+
     .delete-btn:hover {
-      background-color: #D32F2F;
+      background: #dc2626;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+      display: flex;
+      gap: 16px;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .nav-btn {
+      background: var(--primary);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .nav-buttons {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -173,64 +242,90 @@
       window.location.href = 'login.html';
     }
   </script>
+
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <span id="welcomeUser">Welcome, Unknown</span>
-      <button id="logoutBtn">Logout</button>
+      <div class="header-title">Patient Data Table</div>
+      <div class="user-info">
+        <span id="welcomeUser">Welcome, Unknown</span>
+        <button class="logout-btn" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </div>
     </div>
-    <h1>Patient Data Table</h1>
-    
+
     <!-- Search Field -->
     <div class="search-container">
       <input type="text" id="searchInput" placeholder="Search by patient name..." oninput="filterTable()">
     </div>
-    
+
     <!-- Patient Table -->
-    <table id="patientTable">
-      <thead>
-        <tr>
-          <th>Patient ID</th>
-          <th>Name</th>
-          <th>DOB</th>
-          <th>Location</th>
-          <th>Phone</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="patientTableBody">
-        <!-- Table rows will be injected here -->
-      </tbody>
-    </table>
+    <div class="table-container">
+      <table id="patientTable">
+        <thead>
+          <tr>
+            <th>Patient ID</th>
+            <th>Name</th>
+            <th>DOB</th>
+            <th>Location</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="patientTableBody">
+          <!-- Table rows will be injected here -->
+        </tbody>
+      </table>
+    </div>
+
     <!-- Navigation Buttons -->
-    <div class="button-container">
-      <button type="button" onclick="window.open('index.html', '_blank')">Go to Data Entry</button>
-      <button type="button" onclick="window.open('dashboard.html', '_blank')">Go to Dashboard</button>
+    <div class="nav-buttons">
+      <a href="index.html" class="nav-btn">
+        <i class="fas fa-plus"></i>
+        Go to Data Entry
+      </a>
+      <a href="dashboard.html" class="nav-btn">
+        <i class="fas fa-chart-line"></i>
+        Go to Dashboard
+      </a>
     </div>
   </div>
-  
+
   <script>
     // Setup header: display logged-in username and logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
-      document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
+      document.getElementById('welcomeUser').textContent = `Welcome, ${loggedUser}`;
       document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.removeItem('loggedIn');
         localStorage.removeItem('loggedUser');
         window.location.href = 'login.html';
       });
     }
-    
-    // Load patients from Parse and populate table (only those created by the current user)
+
+    // Load patients from Parse and populate table
     async function loadPatients() {
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
-        // Only fetch patients created by the current user
         query.equalTo("createdBy", Parse.User.current());
         const results = await query.find();
         const tbody = document.getElementById('patientTableBody');
         tbody.innerHTML = "";
+
+        if (results.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-light);">
+                No patients found.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
         results.forEach((patient) => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -241,8 +336,14 @@
             <td>${patient.get("phone") || ""}</td>
             <td>
               <div class="action-buttons">
-                <button class="show-btn" onclick="showPatient('${patient.id}')">Show</button>
-                <button class="delete-btn" onclick="deletePatient('${patient.id}')">Delete</button>
+                <button class="show-btn" onclick="showPatient('${patient.id}')">
+                  <i class="fas fa-eye"></i>
+                  Show
+                </button>
+                <button class="delete-btn" onclick="deletePatient('${patient.id}')">
+                  <i class="fas fa-trash"></i>
+                  Delete
+                </button>
               </div>
             </td>
           `;
@@ -250,17 +351,24 @@
         });
       } catch (error) {
         console.error("Error fetching patients:", error);
+        const tbody = document.getElementById('patientTableBody');
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 24px; color: #ef4444;">
+              Error loading patients: ${error.message}
+            </td>
+          </tr>
+        `;
       }
     }
-    
-    // Filter table rows based on search input (search by patient name)
+
+    // Filter table rows based on search input
     function filterTable() {
       const input = document.getElementById("searchInput");
       const filter = input.value.toLowerCase();
       const table = document.getElementById("patientTable");
       const tr = table.getElementsByTagName("tr");
-      
-      // Start from 1 to skip header row
+
       for (let i = 1; i < tr.length; i++) {
         const td = tr[i].getElementsByTagName("td")[1]; // Patient name column
         if (td) {
@@ -269,12 +377,12 @@
         }
       }
     }
-    
+
     // Redirect to edit page with patientId as query parameter
     function showPatient(patientId) {
       window.location.href = "editPatient.html?patientId=" + patientId;
     }
-    
+
     // Delete a patient using Parse
     async function deletePatient(patientId) {
       if (confirm("Are you sure you want to delete this patient?")) {
@@ -293,7 +401,7 @@
         }
       }
     }
-    
+
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
       loadPatients();
