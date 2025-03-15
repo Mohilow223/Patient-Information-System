@@ -1,1 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Patient Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Fonts and Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Include Parse SDK and Chart.js -->
+  <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --secondary: #3b82f6;
+      --background: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    /* Header Styles */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 32px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .header-title h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-info span {
+      font-weight: 500;
+      color: var(--text-light);
+    }
+
+    .logout-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Main Content */
+    .content {
+      padding: 32px;
+    }
+
+    /* Analytics Section */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-header {
+      margin-bottom: 24px;
+    }
+
+    .chart-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Data Table (Trend Table) */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 16px 24px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .data-table thead {
+      background: var(--primary);
+      color: white;
+    }
+
+    .data-table th {
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--background);
+    }
+
+    /* Navigation */
+    .nav-buttons {
+      display: flex;
+      gap: 16px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      background: var(--secondary);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 12px 16px;
+      }
+
+      .nav-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="container">
+    <header class="header">
+      <div class="header-title">
+        <h1>Patient Analytics Dashboard</h1>
+      </div>
+      <div class="user-info">
+        <span id="welcomeUser">Welcome, Unknown</span>
+        <button class="logout-btn" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="analytics-grid">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h2>Patients by Specialty</h2>
+          </div>
+          <table class="data-table" id="trendTable">
+            <thead>
+              <tr>
+                <th>Specialty</th>
+                <th>Patients</th>
+              </tr>
+            </thead>
+            <tbody id="trendTableBody">
+              <!-- Data loaded here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-header">
+            <h2>Age Distribution</h2>
+          </div>
+          <div style="position: relative; height: 300px;">
+            <canvas id="ageChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <a href="index.html" class="nav-btn">
+          <i class="fas fa-plus"></i>
+          New Patient
+        </a>
+        <a href="patientTable.html" class="nav-btn">
+          <i class="fas fa-table"></i>
+          View All Patients
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Setup header: display logged-in username and logout functionality
+    function setupHeader() {
+      const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
+      document.getElementById('welcomeUser').textContent = `Welcome, ${loggedUser}`;
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('loggedIn');
+        localStorage.removeItem('loggedUser');
+        window.location.href = 'login.html';
+      });
+    }
+
+    // Load patient trend by specialty for the current user
+    async function loadTrendTable() {
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        query.equalTo("createdBy", Parse.User.current());
+        const patients = await query.find();
+        
+        const trendCounts = {};
+        patients.forEach((patient) => {
+          const creator = patient.get("createdBy");
+          if (creator) {
+            const specialty = creator.get("specialty") || "N/A";
+            trendCounts[specialty] = (trendCounts[specialty] || 0) + 1;
+          }
+        });
+        
+        const trendTableBody = document.getElementById("trendTableBody");
+        trendTableBody.innerHTML = "";
+        Object.keys(trendCounts).forEach((spec) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${spec}</td><td>${trendCounts[spec]}</td>`;
+          trendTableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("Error loading specialty trends:", error);
+      }
+    }
+
+    // Render a bar chart for age distribution using Chart.js
+    function renderBarChart(canvasId, labels, data, datasetLabel) {
+      const ctx = document.getElementById(canvasId).getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: datasetLabel,
+            data: data,
+            backgroundColor: "rgba(76, 175, 80, 0.6)",
+            borderColor: "rgba(76, 175, 80, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: { display: true, text: datasetLabel },
+              ticks: { autoSkip: false }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Count" }
+            }
+          },
+          plugins: { legend: { display: false } },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // Load patient age distribution for the current user and render chart
+    async function loadAgeChart() {
+      try {
+        const Patient = Parse.Object.extend("Patient");
+        const query = new Parse.Query(Patient);
+        query.equalTo("createdBy", Parse.User.current());
+        const patients = await query.find();
+        
+        const ageCounts = {};
+        patients.forEach((patient) => {
+          const dob = patient.get("dob");
+          if (dob) {
+            const age = calculateAge(dob);
+            const ageGroup = groupAge(age);
+            ageCounts[ageGroup] = (ageCounts[ageGroup] || 0) + 1;
+          }
+        });
+        
+        const ageGroups = Object.keys(ageCounts).map(Number).sort((a, b) => a - b);
+        const ageLabels = ageGroups.map(g => `${g}-${g+9}`);
+        const ageData = ageGroups.map(g => ageCounts[g]);
+        renderBarChart("ageChart", ageLabels, ageData, "Patients");
+      } catch (error) {
+        console.error("Error loading age chart:", error);
+      }
+    }
+
+    // Helper: Calculate age from a dob string ("YYYY-MM-DD")
+    function calculateAge(dobString) {
+      const dob = new Date(dobString);
+      const diffMs = Date.now() - dob.getTime();
+      const ageDt = new Date(diffMs);
+      return Math.abs(ageDt.getUTCFullYear() - 1970);
+    }
+
+    // Helper: Group age into decades
+    function groupAge(age) {
+      return Math.floor(age / 10) * 10;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      setupHeader();
+      loadTrendTable();
+      loadAgeChart();
+    });
+  </script>
+</body>
+</html>
