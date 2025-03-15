@@ -124,7 +124,7 @@
       color: var(--text);
     }
 
-    /* Data Table */
+    /* Data Table (Trend Table) */
     .data-table {
       width: 100%;
       border-collapse: collapse;
@@ -162,14 +162,6 @@
 
     .data-table tbody tr:hover {
       background: var(--background);
-    }
-
-    /* Loading State */
-    .loading {
-      text-align: center;
-      color: var(--text-light);
-      padding: 20px;
-      font-style: italic;
     }
 
     /* Navigation */
@@ -222,12 +214,13 @@
 </head>
 <body>
   <script>
+    // Redirect if not logged in
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
   </script>
-
   <div class="container">
+    <!-- Header -->
     <header class="header">
       <div class="header-title">
         <h1>Patient Analytics Dashboard</h1>
@@ -247,6 +240,7 @@
           <div class="chart-header">
             <h2>Patients by Specialty</h2>
           </div>
+          <!-- Trend Table: Patients by Specialty for current user -->
           <table class="data-table" id="trendTable">
             <thead>
               <tr>
@@ -255,16 +249,14 @@
               </tr>
             </thead>
             <tbody id="trendTableBody">
-              <tr>
-                <td colspan="2" class="loading">Loading data...</td>
-              </tr>
+              <!-- Trend data loaded here -->
             </tbody>
           </table>
         </div>
 
         <div class="chart-container">
           <div class="chart-header">
-            <h2>Age Distribution</h2>
+            <h2>Patient Ages Distribution</h2>
           </div>
           <div style="position: relative; height: 300px;">
             <canvas id="ageChart"></canvas>
@@ -286,7 +278,7 @@
   </div>
 
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Setup header: display logged-in username and add logout functionality
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = `Welcome, ${loggedUser}`;
@@ -297,164 +289,102 @@
       });
     }
 
-    // Load patient trend by specialty for the current user (FIXED)
+    // Load patient trends (by specialty) for current user
     async function loadTrendTable() {
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
-        query.include("createdBy"); // Include user data
         query.equalTo("createdBy", Parse.User.current());
-        
+        query.include("createdBy"); // include pointer details
         const patients = await query.find();
-        const trendCounts = {};
         
+        const trendCounts = {};
         patients.forEach((patient) => {
+          // Use the user's specialty from the createdBy pointer
           const creator = patient.get("createdBy");
           if (creator) {
-            const specialty = creator.get("specialty") || "Unspecified";
+            const specialty = creator.get("specialty") || "N/A";
             trendCounts[specialty] = (trendCounts[specialty] || 0) + 1;
           }
         });
-
-        // Sort specialties alphabetically
-        const sortedSpecialties = Object.keys(trendCounts).sort();
         
         const trendTableBody = document.getElementById("trendTableBody");
         trendTableBody.innerHTML = "";
-        
-        if (sortedSpecialties.length === 0) {
-          trendTableBody.innerHTML = `
-            <tr>
-              <td colspan="2">No patient data found</td>
-            </tr>
-          `;
-          return;
-        }
-
-        sortedSpecialties.forEach((spec) => {
+        Object.keys(trendCounts).forEach((spec) => {
           const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${spec}</td>
-            <td>${trendCounts[spec]}</td>
-          `;
+          row.innerHTML = `<td>${spec}</td><td>${trendCounts[spec]}</td>`;
           trendTableBody.appendChild(row);
         });
-
       } catch (error) {
         console.error("Error loading specialty trends:", error);
-        const trendTableBody = document.getElementById("trendTableBody");
-        trendTableBody.innerHTML = `
-          <tr>
-            <td colspan="2">Error loading data: ${error.message}</td>
-          </tr>
-        `;
       }
     }
 
-    // Render age distribution chart with improved styling
-    function renderBarChart(canvasId, labels, data) {
+    // Render a bar chart for age distribution using Chart.js
+    function renderBarChart(canvasId, labels, data, datasetLabel) {
       const ctx = document.getElementById(canvasId).getContext("2d");
       new Chart(ctx, {
         type: "bar",
         data: {
           labels: labels,
           datasets: [{
-            label: "Patients",
+            label: datasetLabel,
             data: data,
-            backgroundColor: "rgba(99, 102, 241, 0.7)",
-            borderColor: "rgba(99, 102, 241, 1)",
-            borderWidth: 1,
-            borderRadius: 4
+            backgroundColor: "rgba(76, 175, 80, 0.6)",
+            borderColor: "rgba(76, 175, 80, 1)",
+            borderWidth: 1
           }]
         },
         options: {
           scales: {
             x: {
-              title: { 
-                display: true, 
-                text: "Age Groups",
-                color: "#64748b",
-                font: { weight: "bold" }
-              },
-              grid: { display: false },
-              ticks: { color: "#64748b" }
+              title: { display: true, text: datasetLabel },
+              ticks: { autoSkip: false }
             },
             y: {
               beginAtZero: true,
-              title: { 
-                display: true, 
-                text: "Number of Patients",
-                color: "#64748b",
-                font: { weight: "bold" }
-              },
-              grid: { color: "#e2e8f0" },
-              ticks: { color: "#64748b" }
+              title: { display: true, text: "Count" }
             }
           },
-          plugins: { 
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "#1e293b",
-              titleColor: "#f8fafc",
-              bodyColor: "#f8fafc"
-            }
-          },
+          plugins: { legend: { display: false } },
           responsive: true,
           maintainAspectRatio: false
         }
       });
     }
 
-    // Load age distribution data
+    // Load patient age distribution for current user and render chart
     async function loadAgeChart() {
       try {
         const Patient = Parse.Object.extend("Patient");
         const query = new Parse.Query(Patient);
         query.equalTo("createdBy", Parse.User.current());
-        
         const patients = await query.find();
+
         const ageCounts = {};
-        
         patients.forEach((patient) => {
           const dob = patient.get("dob");
           if (dob) {
             const age = calculateAge(dob);
-            if (age !== null) {
-              const ageGroup = groupAge(age);
-              ageCounts[ageGroup] = (ageCounts[ageGroup] || 0) + 1;
-            }
+            const ageGroup = groupAge(age);
+            ageCounts[ageGroup] = (ageCounts[ageGroup] || 0) + 1;
           }
         });
-
         const ageGroups = Object.keys(ageCounts).map(Number).sort((a, b) => a - b);
         const ageLabels = ageGroups.map(g => `${g}-${g+9}`);
         const ageData = ageGroups.map(g => ageCounts[g]);
-        
-        if (ageGroups.length === 0) {
-          document.getElementById("ageChart").parentElement.innerHTML = 
-            "<p class='loading'>No age data available</p>";
-          return;
-        }
-        
-        renderBarChart("ageChart", ageLabels, ageData);
+        renderBarChart("ageChart", ageLabels, ageData, "Patients");
       } catch (error) {
         console.error("Error loading age chart:", error);
-        document.getElementById("ageChart").parentElement.innerHTML = 
-          `<p class='loading'>Error loading chart: ${error.message}</p>`;
       }
     }
 
-    // Helper: Calculate age with error handling
+    // Helper: Calculate age from a dob string ("YYYY-MM-DD")
     function calculateAge(dobString) {
-      try {
-        const dob = new Date(dobString);
-        if (isNaN(dob)) return null;
-        const diffMs = Date.now() - dob.getTime();
-        const ageDt = new Date(diffMs);
-        return Math.abs(ageDt.getUTCFullYear() - 1970);
-      } catch {
-        return null;
-      }
+      const dob = new Date(dobString);
+      const diffMs = Date.now() - dob.getTime();
+      const ageDt = new Date(diffMs);
+      return Math.abs(ageDt.getUTCFullYear() - 1970);
     }
 
     // Helper: Group age into decades
@@ -462,7 +392,6 @@
       return Math.floor(age / 10) * 10;
     }
 
-    // Initialize dashboard
     document.addEventListener("DOMContentLoaded", () => {
       setupHeader();
       loadTrendTable();
