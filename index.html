@@ -466,6 +466,190 @@
   </div>
 
   <script>
+    <script>
+  // Add Disease Entry
+  function addDiseaseEntry(diseaseData) {
+    const container = document.getElementById('diseasesContainer');
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'dynamic-entry';
+
+    entryDiv.innerHTML = `
+      <label>Disease:</label>
+      <input type="text" class="disease-name" placeholder="Enter disease name" required>
+      <label>Medications:</label>
+      <input type="text" class="disease-medications" placeholder="Enter medications" required>
+      <button type="button" onclick="this.parentElement.remove()">
+        <i class="fas fa-trash"></i>
+        Remove Disease
+      </button>
+    `;
+
+    if (diseaseData) {
+      entryDiv.querySelector('.disease-name').value = diseaseData.disease;
+      entryDiv.querySelector('.disease-medications').value = diseaseData.medications;
+    }
+
+    container.appendChild(entryDiv);
+  }
+
+  document.getElementById('addDiseaseBtn').addEventListener('click', () => addDiseaseEntry());
+
+  // Add Surgery Entry
+  function addSurgeryEntry(surgeryData) {
+    const container = document.getElementById('surgeriesContainer');
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'dynamic-entry';
+
+    entryDiv.innerHTML = `
+      <label>Surgery Date:</label>
+      <input type="date" class="surgery-date" required>
+      <label>Type of Surgery:</label>
+      <input type="text" class="surgery-type" placeholder="Enter surgery type" required>
+      <label>Indication:</label>
+      <input type="text" class="surgery-indication" placeholder="Enter indication" required>
+      <button type="button" onclick="this.parentElement.remove()">
+        <i class="fas fa-trash"></i>
+        Remove Surgery
+      </button>
+    `;
+
+    if (surgeryData) {
+      entryDiv.querySelector('.surgery-date').value = surgeryData.date;
+      entryDiv.querySelector('.surgery-type').value = surgeryData.type;
+      entryDiv.querySelector('.surgery-indication').value = surgeryData.indication;
+    }
+
+    container.appendChild(entryDiv);
+  }
+
+  document.getElementById('addSurgeryBtn').addEventListener('click', () => addSurgeryEntry());
+
+  // Add Medication Entry
+  function addMedicationEntry(medData) {
+    const container = document.getElementById('medicationsContainer');
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'dynamic-entry';
+
+    entryDiv.innerHTML = `
+      <label>Medication Name:</label>
+      <input type="text" class="medication-name" placeholder="Enter medication name" required>
+      <label>Dosage:</label>
+      <input type="text" class="medication-dosage" placeholder="Enter dosage" required>
+      <label>Frequency:</label>
+      <input type="text" class="medication-frequency" placeholder="Enter frequency" required>
+      <button type="button" onclick="this.parentElement.remove()">
+        <i class="fas fa-trash"></i>
+        Remove Medication
+      </button>
+    `;
+
+    if (medData) {
+      entryDiv.querySelector('.medication-name').value = medData.name;
+      entryDiv.querySelector('.medication-dosage').value = medData.dosage;
+      entryDiv.querySelector('.medication-frequency').value = medData.frequency;
+    }
+
+    container.appendChild(entryDiv);
+  }
+
+  document.getElementById('addMedicationBtn').addEventListener('click', () => addMedicationEntry());
+
+  // Handle form submission
+  document.getElementById('patientForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    // Gather form data
+    const patientName = document.getElementById('patientName').value.trim();
+    const dob = document.getElementById('dob').value;
+    const location = document.getElementById('location').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+
+    // Gather dynamic entries for Medical History
+    const diseases = Array.from(document.querySelectorAll('#diseasesContainer .dynamic-entry')).map(entry => {
+      return {
+        disease: entry.querySelector('.disease-name').value,
+        medications: entry.querySelector('.disease-medications').value,
+      };
+    });
+
+    const surgeries = Array.from(document.querySelectorAll('#surgeriesContainer .dynamic-entry')).map(entry => {
+      return {
+        date: entry.querySelector('.surgery-date').value,
+        type: entry.querySelector('.surgery-type').value,
+        indication: entry.querySelector('.surgery-indication').value,
+      };
+    });
+
+    const medications = Array.from(document.querySelectorAll('#medicationsContainer .dynamic-entry')).map(entry => {
+      return {
+        name: entry.querySelector('.medication-name').value,
+        dosage: entry.querySelector('.medication-dosage').value,
+        frequency: entry.querySelector('.medication-frequency').value,
+      };
+    });
+
+    // Gather visits
+    const visits = Array.from(document.querySelectorAll('#visitsList .visit-item')).map(item => {
+      const date = item.querySelector('strong').textContent;
+      const complaint = item.textContent.split(':')[1].trim();
+      return {
+        date,
+        chiefComplaint: complaint,
+      };
+    });
+
+    // Handle investigations (file uploads)
+    const investigationsInput = document.getElementById('investigations');
+    const files = investigationsInput.files;
+    let investigations = [];
+    if (files.length > 0) {
+      investigations = await Promise.all(
+        Array.from(files).map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+    }
+
+    // Create a new Parse object for the "Patient" class
+    const Patient = Parse.Object.extend('Patient');
+    const newPatient = new Patient();
+
+    // Set fields
+    newPatient.set('patientName', patientName);
+    newPatient.set('dob', dob);
+    newPatient.set('location', location);
+    newPatient.set('phone', phone);
+    newPatient.set('pastMedicalHistory', diseases);
+    newPatient.set('pastSurgicalHistory', surgeries);
+    newPatient.set('medications', medications);
+    newPatient.set('visits', visits);
+    newPatient.set('investigations', investigations);
+    newPatient.set('createdBy', Parse.User.current());
+
+    try {
+      const savedPatient = await newPatient.save();
+      alert('Patient saved successfully!');
+      document.getElementById('patientForm').reset(); // Clear the form
+      document.getElementById('diseasesContainer').innerHTML = ''; // Clear dynamic entries
+      document.getElementById('surgeriesContainer').innerHTML = '';
+      document.getElementById('medicationsContainer').innerHTML = '';
+      document.getElementById('visitsList').innerHTML = '';
+    } catch (error) {
+      console.error('Error saving patient:', error);
+      alert('Error saving patient: ' + error.message);
+    }
+  });
+
+  // Initialize the page
+  document.addEventListener('DOMContentLoaded', () => {
+    setupHeader();
+  });
+</script>
+  <script>
     // Toggle Add Visit Form
     const toggleVisitFormBtn = document.getElementById('toggleVisitFormBtn');
     const addVisitForm = document.getElementById('addVisitForm');
