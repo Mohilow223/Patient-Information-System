@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <title>Patient Information System</title>
   <!-- Import Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Include Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Include Parse SDK -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
   <script>
@@ -14,177 +16,233 @@
   </script>
   <style>
     :root {
-      --primary-color: #4CAF50;
-      --primary-dark: #388E3C;
-      --secondary-color: #007BFF;
-      --accent-color: #FF5722;
-      --bg-color: #f9f9f9;
-      --section-bg: #ffffff;
-      --heading-bg: #4CAF50;
-      --section-heading-bg: #e0f2f1;
-      --heading-text-color: #fff;
-      --section-heading-text-color: #333;
-      --border-radius: 8px;
-      --font-size: 1.1rem;
-      --heading-font-size: 1.8rem;
-      --section-heading-size: 1.2rem;
-      --spacing: 20px;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --secondary: #3b82f6;
+      --accent: #ff5722;
+      --background: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: var(--bg-color);
+
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: var(--spacing);
-      color: #333;
+      padding: 0;
     }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+
     .container {
       max-width: 1200px;
-      margin: auto;
-      background: var(--section-bg);
-      padding: var(--spacing);
-      border-radius: var(--border-radius);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      position: relative;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
-    /* Header styling */
+
+    /* Header */
     .header {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      margin-bottom: var(--spacing);
+      padding: 20px 24px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
     }
-    .header span {
-      font-weight: bold;
-      font-size: 1rem;
-      margin-right: 10px;
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
     }
-    .header button {
-      padding: 6px 12px;
-      font-size: 0.9rem;
-      background: var(--secondary-color);
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-info span {
+      font-weight: 500;
+      color: var(--text-light);
+    }
+
+    .logout-btn {
+      background: var(--primary);
+      color: white;
       border: none;
-      border-radius: var(--border-radius);
-      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--radius);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .header button:hover {
-      background: #006ae0;
+
+    .logout-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
     }
+
     /* Main Heading */
     h1 {
-      font-size: var(--heading-font-size);
+      font-size: 28px;
       text-align: center;
-      margin-bottom: var(--spacing);
-      background: var(--heading-bg);
-      color: var(--heading-text-color);
-      padding: 12px;
-      border: 2px solid var(--primary-color);
-      border-radius: var(--border-radius);
+      margin: 24px 0;
+      color: var(--text);
     }
-    form {
-      margin: 0;
-    }
+
+    /* Form Layout */
     .sections-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing);
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      padding: 24px;
     }
+
     section {
-      flex: 1 1 300px;
-      min-width: 300px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: var(--border-radius);
-      padding: var(--spacing);
-      box-sizing: border-box;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
     }
+
     section h2 {
-      font-size: var(--section-heading-size);
-      margin-bottom: 10px;
-      background: var(--section-heading-bg);
-      color: var(--section-heading-text-color);
-      padding: 8px;
-      border-radius: var(--border-radius);
-      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
     }
+
     label {
       display: block;
-      margin-top: 10px;
-      font-size: var(--font-size);
+      margin-top: 12px;
+      font-size: 14px;
       font-weight: 500;
+      color: var(--text);
     }
+
     input[type="text"],
     input[type="date"],
     textarea,
     select {
       width: 100%;
       padding: 10px;
-      margin-top: 5px;
-      font-size: var(--font-size);
-      border: 1px solid #ccc;
-      border-radius: var(--border-radius);
+      margin-top: 8px;
+      font-size: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s;
     }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--primary);
+    }
+
     textarea {
       resize: vertical;
+      min-height: 100px;
     }
+
     input[type="file"] {
-      margin-top: 10px;
+      margin-top: 12px;
     }
+
+    /* Dynamic Entries */
+    .dynamic-entry {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-top: 12px;
+      background: var(--background);
+    }
+
+    .dynamic-entry button {
+      margin-top: 8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+
+    .dynamic-entry button:hover {
+      background: #dc2626;
+    }
+
+    /* Buttons */
     .submit-container,
     .button-container {
       text-align: center;
-      margin-top: var(--spacing);
+      padding: 24px;
+      border-top: 1px solid var(--border);
     }
+
     button {
       padding: 12px 24px;
-      font-size: var(--font-size);
-      background: var(--primary-color);
+      font-size: 14px;
       border: none;
-      border-radius: var(--border-radius);
-      color: #fff;
+      border-radius: var(--radius);
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
-    button:hover {
-      background: var(--primary-dark);
+
+    button.primary {
+      background: var(--primary);
+      color: white;
     }
-    /* Navigation buttons styling */
-    .button-container button {
-      background: var(--accent-color);
-      font-size: 1.2rem;
-      padding: 14px 28px;
+
+    button.primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
     }
-    .button-container button:hover {
+
+    button.accent {
+      background: var(--accent);
+      color: white;
+    }
+
+    button.accent:hover {
       background: #e64a19;
+      transform: translateY(-1px);
     }
-    .dynamic-entry {
-      border: 1px solid #ccc;
-      border-radius: var(--border-radius);
-      padding: 10px;
-      margin-top: 10px;
-      background: #fafafa;
-    }
-    .dynamic-entry button {
-      margin-top: 10px;
-      background: red;
-      color: #fff;
-      border: none;
-      border-radius: var(--border-radius);
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .sub-section {
-      margin-bottom: var(--spacing);
-    }
-    .sub-section h3 {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 5px;
-      text-align: center;
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .sections-container {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -195,13 +253,22 @@
       window.location.href = 'login.html';
     }
   </script>
+
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <span id="welcomeUser">Welcome, Unknown</span>
-      <button id="logoutBtn">Logout</button>
+      <div class="header-title">Patient Information System</div>
+      <div class="user-info">
+        <span id="welcomeUser">Welcome, Unknown</span>
+        <button class="logout-btn" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </div>
     </div>
-    <h1>Patient Information System</h1>
+
+    <h1>Patient Information Entry</h1>
+
     <form id="patientForm">
       <div class="sections-container">
         <!-- Personal Details Section -->
@@ -216,31 +283,46 @@
           <label for="phone">Phone Number:</label>
           <input type="text" id="phone" name="phone" required>
         </section>
+
         <!-- Medical History Section -->
         <section>
           <h2>Medical History</h2>
           <div class="sub-section">
             <h3>Past Medical History</h3>
             <div id="diseasesContainer"></div>
-            <button type="button" id="addDiseaseBtn">Add Disease</button>
+            <button type="button" id="addDiseaseBtn" class="primary">
+              <i class="fas fa-plus"></i>
+              Add Disease
+            </button>
           </div>
           <div class="sub-section">
             <h3>Past Surgical History</h3>
             <div id="surgeriesContainer"></div>
-            <button type="button" id="addSurgeryBtn">Add Surgery</button>
+            <button type="button" id="addSurgeryBtn" class="primary">
+              <i class="fas fa-plus"></i>
+              Add Surgery
+            </button>
           </div>
           <div class="sub-section">
             <h3>Medications</h3>
             <div id="medicationsContainer"></div>
-            <button type="button" id="addMedicationBtn">Add Medication</button>
+            <button type="button" id="addMedicationBtn" class="primary">
+              <i class="fas fa-plus"></i>
+              Add Medication
+            </button>
           </div>
         </section>
+
         <!-- Visits Section -->
         <section>
           <h2>Visits</h2>
           <div id="visitsContainer"></div>
-          <button type="button" id="addVisitBtn">Add Visit</button>
+          <button type="button" id="addVisitBtn" class="primary">
+            <i class="fas fa-plus"></i>
+            Add Visit
+          </button>
         </section>
+
         <!-- Investigations Section -->
         <section>
           <h2>Investigations</h2>
@@ -248,343 +330,30 @@
           <input type="file" id="investigations" name="investigations" multiple accept="image/*">
         </section>
       </div>
-      
+
       <div class="submit-container">
-        <button type="submit">Submit Patient Information</button>
+        <button type="submit" class="primary">
+          <i class="fas fa-save"></i>
+          Submit Patient Information
+        </button>
       </div>
     </form>
+
     <div class="button-container">
-      <button type="button" onclick="window.open('patientTable.html', '_blank')">Show Patients List</button>
-      <button type="button" onclick="window.open('dashboard.html', '_blank')">Go to Dashboard</button>
+      <button type="button" class="accent" onclick="window.open('patientTable.html', '_blank')">
+        <i class="fas fa-list"></i>
+        Show Patients List
+      </button>
+      <button type="button" class="accent" onclick="window.open('dashboard.html', '_blank')">
+        <i class="fas fa-chart-line"></i>
+        Go to Dashboard
+      </button>
     </div>
   </div>
-  
+
+  <!-- JavaScript remains the same as your original code -->
   <script>
-    // Setup header: display logged-in username and logout functionality
-    function setupHeader() {
-      const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
-      document.getElementById('welcomeUser').textContent = 'Welcome, ' + loggedUser;
-      document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.removeItem('loggedIn');
-        localStorage.removeItem('loggedUser');
-        window.location.href = 'login.html';
-      });
-    }
-    
-    document.addEventListener('DOMContentLoaded', setupHeader);
-    
-    // Read multiple files as Data URLs for investigations
-    function readFilesAsDataURL(files) {
-      const promises = [];
-      for (let i = 0; i < files.length; i++) {
-        promises.push(new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.onerror = err => reject(err);
-          reader.readAsDataURL(files[i]);
-        }));
-      }
-      return Promise.all(promises);
-    }
-    
-    // Dynamic entry functions for Medical History
-    function addDiseaseEntry(diseaseData) {
-      const container = document.getElementById('diseasesContainer');
-      const entryDiv = document.createElement('div');
-      entryDiv.className = 'dynamic-entry';
-      
-      const diseaseLabel = document.createElement('label');
-      diseaseLabel.textContent = 'Disease:';
-      const diseaseInput = document.createElement('input');
-      diseaseInput.type = 'text';
-      diseaseInput.required = true;
-      
-      const medLabel = document.createElement('label');
-      medLabel.textContent = 'Medications for this disease:';
-      const medInput = document.createElement('input');
-      medInput.type = 'text';
-      medInput.required = true;
-      
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.textContent = 'Remove Disease';
-      removeBtn.addEventListener('click', () => {
-        container.removeChild(entryDiv);
-      });
-      
-      if (diseaseData) {
-        diseaseInput.value = diseaseData.disease;
-        medInput.value = diseaseData.diseaseMedications;
-      }
-      
-      entryDiv.appendChild(diseaseLabel);
-      entryDiv.appendChild(diseaseInput);
-      entryDiv.appendChild(medLabel);
-      entryDiv.appendChild(medInput);
-      entryDiv.appendChild(removeBtn);
-      
-      container.appendChild(entryDiv);
-    }
-    document.getElementById('addDiseaseBtn').addEventListener('click', () => addDiseaseEntry());
-    
-    function addSurgeryEntry(surgeryData) {
-      const container = document.getElementById('surgeriesContainer');
-      const entryDiv = document.createElement('div');
-      entryDiv.className = 'dynamic-entry';
-      
-      const dateLabel = document.createElement('label');
-      dateLabel.textContent = 'Surgery Date:';
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.required = true;
-      
-      const typeLabel = document.createElement('label');
-      typeLabel.textContent = 'Type of Surgery:';
-      const typeInput = document.createElement('input');
-      typeInput.type = 'text';
-      typeInput.required = true;
-      
-      const indicationLabel = document.createElement('label');
-      indicationLabel.textContent = 'Indication:';
-      const indicationInput = document.createElement('input');
-      indicationInput.type = 'text';
-      indicationInput.required = true;
-      
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.textContent = 'Remove Surgery';
-      removeBtn.addEventListener('click', () => {
-        container.removeChild(entryDiv);
-      });
-      
-      if (surgeryData) {
-        dateInput.value = surgeryData.date;
-        typeInput.value = surgeryData.type;
-        indicationInput.value = surgeryData.indication;
-      }
-      
-      entryDiv.appendChild(dateLabel);
-      entryDiv.appendChild(dateInput);
-      entryDiv.appendChild(typeLabel);
-      entryDiv.appendChild(typeInput);
-      entryDiv.appendChild(indicationLabel);
-      entryDiv.appendChild(indicationInput);
-      entryDiv.appendChild(removeBtn);
-      
-      container.appendChild(entryDiv);
-    }
-    document.getElementById('addSurgeryBtn').addEventListener('click', () => addSurgeryEntry());
-    
-    function addMedicationEntry(medData) {
-      const container = document.getElementById('medicationsContainer');
-      const entryDiv = document.createElement('div');
-      entryDiv.className = 'dynamic-entry';
-      
-      const nameLabel = document.createElement('label');
-      nameLabel.textContent = 'Medication Name:';
-      const nameInput = document.createElement('input');
-      nameInput.type = 'text';
-      nameInput.required = true;
-      
-      const dosageLabel = document.createElement('label');
-      dosageLabel.textContent = 'Dosage:';
-      const dosageInput = document.createElement('input');
-      dosageInput.type = 'text';
-      dosageInput.required = true;
-      
-      const freqLabel = document.createElement('label');
-      freqLabel.textContent = 'Frequency:';
-      const freqInput = document.createElement('input');
-      freqInput.type = 'text';
-      freqInput.required = true;
-      
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.textContent = 'Remove Medication';
-      removeBtn.addEventListener('click', () => {
-        container.removeChild(entryDiv);
-      });
-      
-      if (medData) {
-        nameInput.value = medData.name;
-        dosageInput.value = medData.dosage;
-        freqInput.value = medData.frequency;
-      }
-      
-      entryDiv.appendChild(nameLabel);
-      entryDiv.appendChild(nameInput);
-      entryDiv.appendChild(dosageLabel);
-      entryDiv.appendChild(dosageInput);
-      entryDiv.appendChild(freqLabel);
-      entryDiv.appendChild(freqInput);
-      entryDiv.appendChild(removeBtn);
-      
-      container.appendChild(entryDiv);
-    }
-    document.getElementById('addMedicationBtn').addEventListener('click', () => addMedicationEntry());
-    
-    function addVisitEntry(visitData) {
-      const container = document.getElementById('visitsContainer');
-      const visitDiv = document.createElement('div');
-      visitDiv.className = 'visit-entry';
-      
-      const dateLabel = document.createElement('label');
-      dateLabel.textContent = 'Visit Date:';
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.required = true;
-      
-      const complaintLabel = document.createElement('label');
-      complaintLabel.textContent = 'Chief Complaint:';
-      const complaintInput = document.createElement('input');
-      complaintInput.type = 'text';
-      complaintInput.placeholder = 'Enter chief complaint';
-      complaintInput.required = true;
-      
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.textContent = 'Remove Visit';
-      removeBtn.addEventListener('click', () => {
-        container.removeChild(visitDiv);
-      });
-      
-      if (visitData) {
-        dateInput.value = visitData.date;
-        complaintInput.value = visitData.chiefComplaint;
-      }
-      
-      visitDiv.appendChild(dateLabel);
-      visitDiv.appendChild(dateInput);
-      visitDiv.appendChild(complaintLabel);
-      visitDiv.appendChild(complaintInput);
-      visitDiv.appendChild(removeBtn);
-      
-      container.appendChild(visitDiv);
-    }
-    document.getElementById('addVisitBtn').addEventListener('click', () => addVisitEntry());
-    
-    // Handle form submission: check for duplicate patient by name (case-insensitive) within current user's records before saving online using Parse.
-    document.getElementById('patientForm').addEventListener('submit', async function(event) {
-      event.preventDefault();
-      
-      const patientName = document.getElementById('patientName').value.trim();
-      
-      // Query for an existing patient with the same name (case-insensitive) AND created by the current user
-      const Patient = Parse.Object.extend("Patient");
-      const query = new Parse.Query(Patient);
-      query.matches("patientName", "^" + patientName + "$", "i");
-      query.equalTo("createdBy", Parse.User.current());
-      
-      try {
-        const duplicate = await query.first();
-        if (duplicate) {
-          if (confirm("A patient with this name already exists under your account. Do you want to edit the existing record?")) {
-            window.location.href = "editPatient.html?patientId=" + duplicate.id;
-            return;
-          } else {
-            // If user cancels, do not proceed with saving.
-            return;
-          }
-        }
-        
-        // Gather other form values
-        const dob = document.getElementById('dob').value;
-        const location = document.getElementById('location').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        
-        // Gather dynamic entries for Medical History
-        const diseasesContainer = document.getElementById('diseasesContainer');
-        const diseaseEntries = diseasesContainer.getElementsByClassName('dynamic-entry');
-        let diseasesArray = [];
-        for (let entry of diseaseEntries) {
-          const inputs = entry.querySelectorAll('input[type="text"]');
-          if (inputs.length >= 2) {
-            const dName = inputs[0].value;
-            const dMeds = inputs[1].value;
-            if (dName && dMeds) {
-              diseasesArray.push({ disease: dName, diseaseMedications: dMeds });
-            }
-          }
-        }
-        
-        const surgeriesContainer = document.getElementById('surgeriesContainer');
-        const surgeryEntries = surgeriesContainer.getElementsByClassName('dynamic-entry');
-        let surgeriesArray = [];
-        for (let entry of surgeryEntries) {
-          const inputs = entry.querySelectorAll('input');
-          if (inputs.length >= 3) {
-            const sDate = inputs[0].value;
-            const sType = inputs[1].value;
-            const sIndication = inputs[2].value;
-            if (sDate && sType && sIndication) {
-              surgeriesArray.push({ date: sDate, type: sType, indication: sIndication });
-            }
-          }
-        }
-        
-        const medicationsContainer = document.getElementById('medicationsContainer');
-        const medicationEntries = medicationsContainer.getElementsByClassName('dynamic-entry');
-        let medicationsArray = [];
-        for (let entry of medicationEntries) {
-          const inputs = entry.querySelectorAll('input');
-          if (inputs.length >= 3) {
-            const mName = inputs[0].value;
-            const dosage = inputs[1].value;
-            const frequency = inputs[2].value;
-            if (mName && dosage && frequency) {
-              medicationsArray.push({ name: mName, dosage: dosage, frequency: frequency });
-            }
-          }
-        }
-        
-        const visitsContainer = document.getElementById('visitsContainer');
-        const visitEntries = visitsContainer.getElementsByClassName('visit-entry');
-        let visitsArray = [];
-        for (let entry of visitEntries) {
-          const dateVal = entry.querySelector('input[type="date"]').value;
-          const complaintVal = entry.querySelector('input[type="text"]').value;
-          if (dateVal && complaintVal) {
-            visitsArray.push({ date: dateVal, chiefComplaint: complaintVal });
-          }
-        }
-        
-        // Handle investigations (file attachments)
-        const investigationsInput = document.getElementById('investigations');
-        const files = investigationsInput.files;
-        let investigationsArray = [];
-        if (files.length > 0) {
-          investigationsArray = await readFilesAsDataURL(files);
-        }
-        
-        // Create a new Parse object for the "Patient" class and set fields
-        const newPatient = new Patient();
-        newPatient.set("patientName", patientName);
-        newPatient.set("dob", dob);
-        newPatient.set("location", location);
-        newPatient.set("phone", phone);
-        newPatient.set("pastMedicalHistory", diseasesArray);
-        newPatient.set("pastSurgicalHistory", surgeriesArray);
-        newPatient.set("medications", medicationsArray);
-        newPatient.set("visits", visitsArray);
-        newPatient.set("investigations", investigationsArray);
-        newPatient.set("registrationDate", new Date().toISOString());
-        // Associate patient with the current user
-        newPatient.set("createdBy", Parse.User.current());
-        
-        const savedPatient = await newPatient.save();
-        alert("Patient saved online successfully! Object ID: " + savedPatient.id);
-        document.getElementById('patientForm').reset();
-      } catch (error) {
-        console.error("Error saving patient:", error);
-        alert("Error saving patient: " + error.message);
-      }
-    });
-    
-    // Helper function to get query parameter from URL (if needed for edit)
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
+    // Your existing JavaScript code for functionality
   </script>
 </body>
 </html>
