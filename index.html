@@ -330,6 +330,12 @@
 <body>
   <!-- Redirect if not logged in -->
   <script>
+    // At the start of your script
+if (!Parse.applicationId) {
+  console.error('Parse is not initialized!');
+  alert('Application error: Parse not initialized');
+  return;
+}
     if (localStorage.getItem('loggedIn') !== 'true') {
       window.location.href = 'login.html';
     }
@@ -640,7 +646,39 @@
       }
     });
     // ─────────────────────────────────────────────────────────────────────
-
+document.getElementById('patientForm').addEventListener('submit', async function (event) {
+  event.preventDefault();
+  console.log('Submit handler triggered'); // This should appear in console
+  
+  try {
+    console.log('Checking current user...');
+    const currentUser = Parse.User.current();
+    if (!currentUser) {
+      alert('User not logged in!');
+      window.location.href = 'login.html';
+      return;
+    }
+    console.log('Current user:', currentUser);
+    
+    // ... rest of your code ...
+    
+    console.log('Creating new patient object...');
+    const Patient = Parse.Object.extend('Patient');
+    const newPatient = new Patient();
+    // ... set all properties ...
+    
+    console.log('Attempting to save patient...');
+    await newPatient.save();
+    console.log('Patient saved successfully!');
+    alert('Patient saved successfully!');
+    
+  } catch (error) {
+    console.error('Full error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    alert('Error saving patient: ' + error.message);
+  }
+});
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
