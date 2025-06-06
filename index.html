@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <title>Patient Information System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Google Font -->
+  <!-- Import Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome -->
+  <!-- Include Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Parse SDK -->
+  <!-- Include Parse SDK -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
   <script>
-    // Initialize Parse with Back4App credentials
+    // Initialize Parse with your Back4App credentials
     Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
     Parse.serverURL = 'https://parseapi.back4app.com/';
   </script>
@@ -342,8 +342,7 @@
       <div class="user-info">
         <span id="welcomeUser">Welcome, Unknown</span>
         <button class="logout-btn" id="logoutBtn">
-          <i class="fas fa-sign-out-alt"></i>
-          Logout
+          <i class="fas fa-sign-out-alt"></i> Logout
         </button>
       </div>
     </div>
@@ -397,6 +396,8 @@
           <button type="button" id="toggleVisitFormBtn" class="primary">
             <i class="fas fa-plus"></i> Add Visit
           </button>
+
+          <!-- Add Visit Form -->
           <div class="add-visit-form" id="addVisitForm">
             <label for="visitDate">Visit Date:</label>
             <input type="date" id="visitDate" name="visitDate" required>
@@ -408,6 +409,8 @@
               <i class="fas fa-save"></i> Save Visit
             </button>
           </div>
+
+          <!-- Visits List -->
           <div class="visits-list" id="visitsList"></div>
         </section>
 
@@ -545,7 +548,7 @@
     // Handle “Submit Patient Information”
     document.getElementById('patientForm').addEventListener('submit', async function (event) {
       event.preventDefault();
-      console.log('Submit handler triggered'); // <— Check in Console
+      console.log('Submit handler triggered'); // Check this in the console
 
       const patientName = document.getElementById('patientName').value.trim();
       const dob = document.getElementById('dob').value;
@@ -621,7 +624,7 @@
       try {
         await newPatient.save();
         alert('Patient saved successfully!');
-        // Reset form & dynamic fields
+        // Reset form & dynamic sections
         document.getElementById('patientForm').reset();
         document.getElementById('diseasesContainer').innerHTML = '';
         document.getElementById('surgeriesContainer').innerHTML = '';
