@@ -342,7 +342,8 @@
       <div class="user-info">
         <span id="welcomeUser">Welcome, Unknown</span>
         <button class="logout-btn" id="logoutBtn">
-          <i class="fas fa-sign-out-alt"></i> Logout
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
         </button>
       </div>
     </div>
@@ -545,10 +546,13 @@
       alert('Visit added successfully!');
     });
 
-    // Handle “Submit Patient Information”
+    // ─────────────────────────────────────────────────────────────────────
+    // This block is responsible for actually creating a new Patient object
+    // and saving it to Back4App. Once saved, the form fields are cleared.
+    // ─────────────────────────────────────────────────────────────────────
     document.getElementById('patientForm').addEventListener('submit', async function (event) {
       event.preventDefault();
-      console.log('Submit handler triggered'); // Check this in the console
+      console.log('Submit handler triggered'); // ← Check in console
 
       const patientName = document.getElementById('patientName').value.trim();
       const dob = document.getElementById('dob').value;
@@ -562,20 +566,20 @@
         return;
       }
 
-      // Gather Past Medical History
+      // Gather Past Medical History entries
       const diseases = Array.from(document.querySelectorAll('#diseasesContainer .dynamic-entry')).map(entry => ({
         disease: entry.querySelector('.disease-name').value,
         medications: entry.querySelector('.disease-medications').value
       }));
 
-      // Gather Past Surgical History
+      // Gather Past Surgical History entries
       const surgeries = Array.from(document.querySelectorAll('#surgeriesContainer .dynamic-entry')).map(entry => ({
         date: entry.querySelector('.surgery-date').value,
         type: entry.querySelector('.surgery-type').value,
         indication: entry.querySelector('.surgery-indication').value
       }));
 
-      // Gather Medications
+      // Gather Medication entries
       const medications = Array.from(document.querySelectorAll('#medicationsContainer .dynamic-entry')).map(entry => ({
         name: entry.querySelector('.medication-name').value,
         dosage: entry.querySelector('.medication-dosage').value,
@@ -589,7 +593,7 @@
         return { date, chiefComplaint: complaint };
       });
 
-      // Handle Investigations (Parse.File)
+      // Handle Investigations via Parse.File
       const investigationsInput = document.getElementById('investigations');
       const files = investigationsInput.files;
       let investigations = [];
@@ -607,7 +611,7 @@
         }
       }
 
-      // Create and save new Patient object
+      // Create and save new Patient object to Back4App
       const Patient = Parse.Object.extend('Patient');
       const newPatient = new Patient();
       newPatient.set('patientName', patientName);
@@ -622,9 +626,9 @@
       newPatient.set('createdBy', currentUser);
 
       try {
-        await newPatient.save();
+        await newPatient.save();               // ← This line pushes the record to Back4App
         alert('Patient saved successfully!');
-        // Reset form & dynamic sections
+        // Clear the form and all dynamic sections:
         document.getElementById('patientForm').reset();
         document.getElementById('diseasesContainer').innerHTML = '';
         document.getElementById('surgeriesContainer').innerHTML = '';
@@ -635,6 +639,7 @@
         alert('Error saving patient: ' + error.message);
       }
     });
+    // ─────────────────────────────────────────────────────────────────────
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
