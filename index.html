@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <title>Patient Information System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Import Google Font -->
+  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Include Font Awesome for Icons -->
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Include Parse SDK -->
+  <!-- Parse SDK -->
   <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
   <script>
-    // Initialize Parse with your Back4App credentials
+    // Initialize Parse with Back4App credentials
     Parse.initialize("O2PSSMyhS9FBye2cuiFrZYIIXftw1PhUgQpKYoHj", "ECU7JqFPc115cYqvsCQJjfDLFFIQxaLIyPwi9Pnr");
     Parse.serverURL = 'https://parseapi.back4app.com/';
   </script>
@@ -156,8 +156,7 @@
 
     input[type="text"],
     input[type="date"],
-    textarea,
-    select {
+    textarea {
       width: 100%;
       padding: 10px;
       margin-top: 8px;
@@ -170,8 +169,7 @@
 
     input[type="text"]:focus,
     input[type="date"]:focus,
-    textarea:focus,
-    select:focus {
+    textarea:focus {
       border-color: var(--primary);
     }
 
@@ -374,24 +372,21 @@
             <h3>Past Medical History</h3>
             <div id="diseasesContainer"></div>
             <button type="button" id="addDiseaseBtn" class="primary">
-              <i class="fas fa-plus"></i>
-              Add Disease
+              <i class="fas fa-plus"></i> Add Disease
             </button>
           </div>
           <div class="sub-section">
             <h3>Past Surgical History</h3>
             <div id="surgeriesContainer"></div>
             <button type="button" id="addSurgeryBtn" class="primary">
-              <i class="fas fa-plus"></i>
-              Add Surgery
+              <i class="fas fa-plus"></i> Add Surgery
             </button>
           </div>
           <div class="sub-section">
             <h3>Medications</h3>
             <div id="medicationsContainer"></div>
             <button type="button" id="addMedicationBtn" class="primary">
-              <i class="fas fa-plus"></i>
-              Add Medication
+              <i class="fas fa-plus"></i> Add Medication
             </button>
           </div>
         </section>
@@ -400,31 +395,20 @@
         <section>
           <h2>Visits</h2>
           <button type="button" id="toggleVisitFormBtn" class="primary">
-            <i class="fas fa-plus"></i>
-            Add Visit
+            <i class="fas fa-plus"></i> Add Visit
           </button>
-
-          <!-- Add Visit Form -->
           <div class="add-visit-form" id="addVisitForm">
             <label for="visitDate">Visit Date:</label>
             <input type="date" id="visitDate" name="visitDate" required>
-
             <label for="chiefComplaint">Chief Complaint:</label>
             <input type="text" id="chiefComplaint" name="chiefComplaint" placeholder="Enter chief complaint" required>
-
             <label for="visitNotes">Notes:</label>
             <textarea id="visitNotes" name="visitNotes" placeholder="Additional notes..."></textarea>
-
             <button type="button" id="saveVisitBtn" class="primary">
-              <i class="fas fa-save"></i>
-              Save Visit
+              <i class="fas fa-save"></i> Save Visit
             </button>
           </div>
-
-          <!-- Visits List -->
-          <div class="visits-list" id="visitsList">
-            <!-- Visits will be dynamically added here -->
-          </div>
+          <div class="visits-list" id="visitsList"></div>
         </section>
 
         <!-- Investigations Section -->
@@ -437,26 +421,23 @@
 
       <div class="submit-container">
         <button type="submit" class="primary">
-          <i class="fas fa-save"></i>
-          Submit Patient Information
+          <i class="fas fa-save"></i> Submit Patient Information
         </button>
       </div>
     </form>
 
     <div class="button-container">
       <button type="button" class="accent" onclick="window.open('patientTable.html', '_blank')">
-        <i class="fas fa-list"></i>
-        Show Patients List
+        <i class="fas fa-list"></i> Show Patients List
       </button>
       <button type="button" class="accent" onclick="window.open('dashboard.html', '_blank')">
-        <i class="fas fa-chart-line"></i>
-        Go to Dashboard
+        <i class="fas fa-chart-line"></i> Go to Dashboard
       </button>
     </div>
   </div>
 
   <script>
-    // Setup header: display logged-in username and logout functionality
+    // Display logged-in user and set up logout
     function setupHeader() {
       const loggedUser = localStorage.getItem('loggedUser') || 'Unknown';
       document.getElementById('welcomeUser').textContent = `Welcome, ${loggedUser}`;
@@ -467,7 +448,7 @@
       });
     }
 
-    // Add Disease Entry
+    // Add a “Past Medical History” entry
     function addDiseaseEntry() {
       const container = document.getElementById('diseasesContainer');
       const entryDiv = document.createElement('div');
@@ -478,15 +459,14 @@
         <label>Medications:</label>
         <input type="text" class="disease-medications" placeholder="Enter medications" required>
         <button type="button" onclick="this.parentElement.remove()">
-          <i class="fas fa-trash"></i>
-          Remove Disease
+          <i class="fas fa-trash"></i> Remove Disease
         </button>
       `;
       container.appendChild(entryDiv);
     }
     document.getElementById('addDiseaseBtn').addEventListener('click', addDiseaseEntry);
 
-    // Add Surgery Entry
+    // Add a “Past Surgical History” entry
     function addSurgeryEntry() {
       const container = document.getElementById('surgeriesContainer');
       const entryDiv = document.createElement('div');
@@ -499,15 +479,14 @@
         <label>Indication:</label>
         <input type="text" class="surgery-indication" placeholder="Enter indication" required>
         <button type="button" onclick="this.parentElement.remove()">
-          <i class="fas fa-trash"></i>
-          Remove Surgery
+          <i class="fas fa-trash"></i> Remove Surgery
         </button>
       `;
       container.appendChild(entryDiv);
     }
     document.getElementById('addSurgeryBtn').addEventListener('click', addSurgeryEntry);
 
-    // Add Medication Entry
+    // Add a “Medications” entry
     function addMedicationEntry() {
       const container = document.getElementById('medicationsContainer');
       const entryDiv = document.createElement('div');
@@ -520,71 +499,59 @@
         <label>Frequency:</label>
         <input type="text" class="medication-frequency" placeholder="Enter frequency" required>
         <button type="button" onclick="this.parentElement.remove()">
-          <i class="fas fa-trash"></i>
-          Remove Medication
+          <i class="fas fa-trash"></i> Remove Medication
         </button>
       `;
       container.appendChild(entryDiv);
     }
     document.getElementById('addMedicationBtn').addEventListener('click', addMedicationEntry);
 
-    // Toggle Add Visit Form
+    // Toggle the “Add Visit” form
     const toggleVisitFormBtn = document.getElementById('toggleVisitFormBtn');
     const addVisitForm = document.getElementById('addVisitForm');
     toggleVisitFormBtn.addEventListener('click', () => {
       addVisitForm.classList.toggle('active');
     });
 
-    // Save Visit
+    // Save a visit to the visits list
     const saveVisitBtn = document.getElementById('saveVisitBtn');
     const visitsList = document.getElementById('visitsList');
     saveVisitBtn.addEventListener('click', () => {
       const visitDate = document.getElementById('visitDate').value;
       const chiefComplaint = document.getElementById('chiefComplaint').value;
-      const visitNotes = document.getElementById('visitNotes').value;
-
       if (!visitDate || !chiefComplaint) {
         alert('Please fill in all required fields.');
         return;
       }
 
-      // Create a new visit item
       const visitItem = document.createElement('div');
       visitItem.className = 'visit-item';
       visitItem.innerHTML = `
         <span><strong>${visitDate}</strong>: ${chiefComplaint}</span>
         <button type="button" onclick="this.parentElement.remove()">
-          <i class="fas fa-trash"></i>
-          Remove
+          <i class="fas fa-trash"></i> Remove
         </button>
       `;
-
-      // Add to the visits list
       visitsList.appendChild(visitItem);
 
-      // Clear the form
+      // Reset and collapse form
       document.getElementById('visitDate').value = '';
       document.getElementById('chiefComplaint').value = '';
       document.getElementById('visitNotes').value = '';
-
-      // Collapse the form
       addVisitForm.classList.remove('active');
-
-      // Show a success message
       alert('Visit added successfully!');
     });
 
-    // Handle form submission
+    // Handle “Submit Patient Information”
     document.getElementById('patientForm').addEventListener('submit', async function (event) {
       event.preventDefault();
+      console.log('Submit handler triggered'); // <— Check in Console
 
-      // Gather form data
       const patientName = document.getElementById('patientName').value.trim();
       const dob = document.getElementById('dob').value;
       const location = document.getElementById('location').value.trim();
       const phone = document.getElementById('phone').value.trim();
 
-      // Check logged-in user
       const currentUser = Parse.User.current();
       if (!currentUser) {
         alert('User not logged in!');
@@ -592,38 +559,37 @@
         return;
       }
 
-      // Past Medical History
+      // Gather Past Medical History
       const diseases = Array.from(document.querySelectorAll('#diseasesContainer .dynamic-entry')).map(entry => ({
         disease: entry.querySelector('.disease-name').value,
         medications: entry.querySelector('.disease-medications').value
       }));
 
-      // Past Surgical History
+      // Gather Past Surgical History
       const surgeries = Array.from(document.querySelectorAll('#surgeriesContainer .dynamic-entry')).map(entry => ({
         date: entry.querySelector('.surgery-date').value,
         type: entry.querySelector('.surgery-type').value,
         indication: entry.querySelector('.surgery-indication').value
       }));
 
-      // Medications
+      // Gather Medications
       const medications = Array.from(document.querySelectorAll('#medicationsContainer .dynamic-entry')).map(entry => ({
         name: entry.querySelector('.medication-name').value,
         dosage: entry.querySelector('.medication-dosage').value,
         frequency: entry.querySelector('.medication-frequency').value
       }));
 
-      // Visits
+      // Gather Visits
       const visits = Array.from(document.querySelectorAll('#visitsList .visit-item')).map(item => {
         const date = item.querySelector('strong').textContent;
         const complaint = item.textContent.split(':')[1]?.trim();
         return { date, chiefComplaint: complaint };
       });
 
-      // Investigations (using Parse.File)
+      // Handle Investigations (Parse.File)
       const investigationsInput = document.getElementById('investigations');
       const files = investigationsInput.files;
       let investigations = [];
-
       if (files.length > 0) {
         try {
           for (let file of files) {
@@ -638,10 +604,9 @@
         }
       }
 
-      // Save to Parse
+      // Create and save new Patient object
       const Patient = Parse.Object.extend('Patient');
       const newPatient = new Patient();
-
       newPatient.set('patientName', patientName);
       newPatient.set('dob', dob);
       newPatient.set('location', location);
@@ -656,7 +621,7 @@
       try {
         await newPatient.save();
         alert('Patient saved successfully!');
-        // Clear the form
+        // Reset form & dynamic fields
         document.getElementById('patientForm').reset();
         document.getElementById('diseasesContainer').innerHTML = '';
         document.getElementById('surgeriesContainer').innerHTML = '';
@@ -668,7 +633,7 @@
       }
     });
 
-    // Initialize the page
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
       setupHeader();
     });
